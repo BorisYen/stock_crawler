@@ -9,9 +9,9 @@ db.init(function(err){
         process.exit(1) ;
     }
 
-    price_crawler.get_daily_price_for_year(2353, 2016, function(err, result){
+    price_crawler.crawl_price(2353, {year: 2016, month: 8}, function(err, result){
         if(err){
-            logger.error('unable to get price data for stock %d, year %d', 2353, 2016) ;
+            logger.error('unable to get price data for stock %d, options:', 2353, {year: 2016,  day: 3}, err) ;
         }
         logger.info(result) ;
         db.end(function(){}) ;
