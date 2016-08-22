@@ -9,7 +9,7 @@
 -- );
 
 CREATE TABLE IF NOT EXISTS stock_daily_info ( 
-    id INT NOT NULL,
+    id VARCHAR(10) NOT NULL,
     date Date NOT NULL, 
     vol BIGINT, 
     turnover BIGINT, 
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS stock_daily_info (
 );
 
 CREATE TABLE IF NOT EXISTS stock (
-    id INT NOT NULL,
+    id VARCHAR(10) NOT NULL,
     name VARCHAR(30),
     PRIMARY KEY (id)
 );

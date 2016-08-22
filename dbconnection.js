@@ -11,29 +11,29 @@ var pool  = mysql.createPool({
 
 exports.pool = pool;
 
-exports.init = function (cb){
-    pool.query('create table if not exists stock_price ( \
-            date Date, \
-            vol BIGINT, \
-            turnover BIGINT, \
-            open Float, \
-            high Float, \
-            low Float, \
-            close Float, \
-            diff Float, \
-            transactions INT,\
-            primary key (date) \
-        )', function(err, rows, fields){
-            if(err) {
-                logger.error('something wrong when creating the stock table', err) 
+// exports.init = function (cb){
+//     pool.query('create table if not exists stock_price ( \
+//             date Date, \
+//             vol BIGINT, \
+//             turnover BIGINT, \
+//             open Float, \
+//             high Float, \
+//             low Float, \
+//             close Float, \
+//             diff Float, \
+//             transactions INT,\
+//             primary key (date) \
+//         )', function(err, rows, fields){
+//             if(err) {
+//                 logger.error('something wrong when creating the stock table', err) 
                 
-                return cb(err) ;
-            }
+//                 return cb(err) ;
+//             }
 
-            logger.info('create stock table successfully.') ;
-            cb(err) ;
-        }) ;
-}
+//             logger.info('create stock table successfully.') ;
+//             cb(err) ;
+//         }) ;
+// }
 
 exports.end = function(cb){
     pool.end(function(err){
