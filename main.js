@@ -1,4 +1,4 @@
-var price_crawler = require('./get_price') ;
+var price_crawler = require('./daily_price_crawler') ;
 var db = require('./dbconnection') ;
 var logger = require('./logging') ;
 var db_pool = db.pool ;
