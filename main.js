@@ -3,7 +3,7 @@ var stock_crawler = require('./lib/stock_list_crawler') ;
 var db = require('./dbconnection') ;
 var logger = require('./logging') ;
 var utils = require('./utils') ;
-var db_pool = db.pool ;
+var Stock = db.Stock ;
 
 function init_stock_list(cb){
     cb = cb || utils.emptyFn ;
@@ -13,14 +13,21 @@ function init_stock_list(cb){
             logger.error('Unable to get stock list', err) ;
             return ;
         }
-        result.forEach(function(item, index, array){
-            db_pool.query('INSERT INTO stock SET ?', item, function(err, result){
-                if(err){
-                    logger.error('Unable to insert stock:', item, err) ;
-                } else {
-                    logger.info('Successfully insert', item) ;
-                }
-            });
+        result.slice(0, 2).forEach(function(item, index, array){
+            Stock.create(item).then(function(stock){
+                logger.info('Successfully insert', stock) ;
+            }).catch(function(err){
+                if(err.original.errno != 1062)
+                    logger.info('Error happens when inserting data', err) ;
+            }) ;
+            // db_pool.query('INSERT INTO stock SET ?', item, function(err, result){
+            //     // 1062 means "Duplicate entry"
+            //     if(err && err.errno != 1062){
+            //         logger.error('Unable to insert stock:', item, err) ;
+            //     } else {
+            //         logger.info('Successfully insert', item) ;
+            //     }
+            // });
         }) ;
     } 
 

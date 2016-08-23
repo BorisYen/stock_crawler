@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS stock_daily_info (
     transactions INT,
     pb_ratio Float,
     pe_ratio Float,
-    yield Float,
+    yields Float,
     PRIMARY KEY (id, date) 
 );
 

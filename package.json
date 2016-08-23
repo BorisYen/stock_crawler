@@ -6,9 +6,9 @@
   "dependencies": {
     "cheerio": "~0.20.0",
     "lodash": "~4.15.0",
-    "mysql": "~2.11.1",
     "request": "~2.74.0",
-    "winston": "~2.2.0"
+    "winston": "~2.2.0" ,
+    "sequelize": "~3.24.1"
   },
   "devDependencies": {},
   "scripts": {
