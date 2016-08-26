@@ -1,13 +1,14 @@
 var Sequelize = require("sequelize")
 var logger = require('./logging') ;
+var config = require('./config')
 
 var sequelize = new Sequelize('stock', 'byan', 'byan', {
-    dialect: 'mysql',
-    port: 3306,
+    dialect: config.db_dialect,
+    port: config.db_port,
     pool: {
-        min: 1,
-        max: 50,
-        idle: 10000
+        min: config.db_pool_min,
+        max: config.db_pool_max,
+        idle: config.db_pool_idle
     }
 }) ;
 
@@ -20,7 +21,9 @@ exports.Stock = sequelize.define('stock', {
     name: Sequelize.STRING(50)
 }, {
     tableName: 'stock',
-    timestamps: false
+    timestamps: false,
+    charset: 'utf8',
+    collate: 'utf8_general_ci'
 }) ;
 
 exports.StockDailyInfo = sequelize.define('stock_daily_info', {
@@ -45,6 +48,9 @@ exports.StockDailyInfo = sequelize.define('stock_daily_info', {
     pb_ratio: Sequelize.FLOAT,
     pe_ratio: Sequelize.FLOAT,
     yields: Sequelize.FLOAT
+},{
+    tableName: 'stock_daily_info',
+    timestamps: false
 }) ;
 
 exports.sequelize = sequelize ;
