@@ -38,13 +38,13 @@ exports.StockDailyInfo = sequelize.define('stock_daily_info', {
         allNull: false
     },
     vol: Sequelize.BIGINT,
-    trunover: Sequelize.BIGINT,
+    turnover: Sequelize.BIGINT,
     open: Sequelize.FLOAT,
     high: Sequelize.FLOAT,
     low: Sequelize.FLOAT,
     close: Sequelize.FLOAT,
     diff: Sequelize.FLOAT,
-    trancations: Sequelize.INTEGER,
+    transations: Sequelize.INTEGER,
     pb_ratio: Sequelize.FLOAT,
     pe_ratio: Sequelize.FLOAT,
     yields: Sequelize.FLOAT
