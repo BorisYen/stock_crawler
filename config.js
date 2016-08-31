@@ -1,4 +1,4 @@
-exports.init = false ;
+exports.init = true ;
 exports.db_dialect = 'mysql' ;
 exports.db_host = '127.0.0.1' ;
 exports.db_port = 3306 ;

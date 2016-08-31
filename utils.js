@@ -6,9 +6,15 @@ exports.convertToNum = function(text){
     if(!_.isString(text))
         throw new Error('Illegal Argument!') ;
 
-    return _.toNumber(text.split(",").join("")) ;
+    var ret = _.toNumber(text.split(",").join(""))
+
+    return  isNaN(ret)? undefined: ret;
 } ;
 
+/**
+ * text has to be format yyy/mm/dd
+ * the year is the year of Taiwan
+ */
 exports.convertToUTC = function(text){
     if(!_.isString(text))
         throw new Error('Illegal Argument!') ;

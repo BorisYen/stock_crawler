@@ -45,67 +45,73 @@ if(!config.init){
         });
 }
 
-// function insert_stock_daily_info(stock_symbol){
-//     var cur_date = new Date() ;
-//     var cur_year = cur_date.getFullYear() ;
-//     var year_range = 20 ;
-//     var promise_list = [] ;
-//     var upsert_promise_list = [] ;
+function insert_stock_daily_info(stock_symbol){
+    var cur_date = new Date() ;
+    var cur_year = cur_date.getFullYear() ;
+    var year_range = 20 ;
+    var promise_list = [] ;
+    var upsert_promise_list = [] ;
 
-//     for(var i = cur_year; i > (cur_year - year_range); i--){
-//         promise_list.push(price_crawler.crawl_price(stock_symbol, {year: i}).reflect()) ;
-//     }
+    for(var i = cur_year; i > (cur_year - year_range); i--){
+        promise_list.push(price_crawler.crawl_price(stock_symbol, {year: i}).reflect()) ;
+    }
 
-//     return Promise.all(promise_list).then(function(result){
-//         logger.info('result length', result.length) ;
+    return Promise.all(promise_list).then(function(result){
+        logger.info('result length', result.length) ;
 
-//         result.forEach(function(item, index, array){
-//             item.value().forEach(function(it, idx){
-//                 upsert_promise_list.push(StockDailyInfo.upsert(it).reflect()) ;
-//             })
-//         }) ;
+        result.forEach(function(item, index, array){
+            item.value().forEach(function(it, idx){
+                upsert_promise_list.push(StockDailyInfo.upsert(it).reflect()) ;
+            })
+        }) ;
 
-//         return Promise.all(upsert_promise_list) ;
-//     }) ;
-// }
+        return Promise.all(upsert_promise_list) ;
+    }) ;
+}
 
-// // Get a few stocks at a time and try to get the price info for them.
-// // Note: it looks like twse is not allowing to create lots of requests in a short period of time.
-// // Set the limit to 1 to workaround this. 
-// // (not sure if twse can take more requsts when it is not a working hour)
-// function create_db(offset, limit){
-//     var stock_list = [] ;
+// Get a few stocks at a time and try to get the price info for them.
+// Note: it looks like twse is not allowing to create lots of requests in a short period of time.
+// Set the limit to 1 to workaround this. 
+// (not sure if twse can take more requsts when it is not a working hour)
+function create_db(offset, limit){
+    var stock_list = [] ;
 
-//     get_stock_record() ;
+    get_stock_record() ;
 
-//     function get_stock_record(offset, limit){
-//         var offset = offset || 0 ;
-//         var limit = limit || 1 ;
+    function get_stock_record(offset, limit){
+        var offset = offset || 0 ;
+        var limit = limit || 2 ;
 
-//         Stock.findAll({offset: offset, limit: limit}).then(function(records){
-//             if(records.length != 0){
-//                 stock_list = stock_list.concat(records) ;
-//                 next(offset, limit) ;
-//             } else {
-//                 logger.info('Create daily price info done.') ;
-//             }
-//         }) ;
-//     }
+        Stock.findAll({offset: offset, limit: limit}).then(function(records){
+            if(records.length != 0){
+                stock_list = stock_list.concat(records) ;
+                next(offset, limit) ;
+            } else {
+                logger.info('Create daily price info done.') ;
+            }
+        }) ;
+    }
 
-//     function next(offset, limit){
-//         var task_complete_count = 0 ;
+    function next(offset, limit){
+        var task_complete_count = 0 ;
 
-//         stock_list.forEach(function(stock, idx, array){
-//             logger.info('Start creating data for stock %s', stock.getDataValue('id')) ;
-//             insert_stock_daily_info(stock.getDataValue('id')).then(function(){
-//                 // when this funciton is called, all the upsert for that stock should have completed.
-//                 if(++task_complete_count === stock_list.length){
-//                     stock_list = [] ;
-//                     get_stock_record(offset+limit, limit) ;
-//                 }
-//             }) ;
-//         }) ;
-//     }
-// }
+        stock_list.forEach(function(stock, idx, array){
+            logger.info('Start creating data for stock %s', stock.getDataValue('id')) ;
+            insert_stock_daily_info(stock.getDataValue('id')).then(function(insert_results){
+                insert_results.forEach(function(it, idx, array){
+                    if(it.isRejected()){
+                        var err = it.reason() ;
+                        logger.error(err.message, err.sql) ;
+                    }
+                }) ;
+                // when this funciton is called, all the upsert for that stock should have completed.
+                if(++task_complete_count === stock_list.length){
+                    stock_list = [] ;
+                    get_stock_record(offset+limit, limit) ;
+                }
+            }) ;
+        }) ;
+    }
+}
 
-// create_db() ;
+create_db() ;
