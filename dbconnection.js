@@ -9,7 +9,8 @@ var sequelize = new Sequelize('stock', 'byan', 'byan', {
         min: config.db_pool_min,
         max: config.db_pool_max,
         idle: config.db_pool_idle
-    }
+    },
+    logging: logger.debug
 }) ;
 
 /**
