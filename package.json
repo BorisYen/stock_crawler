@@ -9,7 +9,8 @@
     "request": "~2.74.0",
     "winston": "~2.2.0" ,
     "sequelize": "~3.24.1",
-    "bluebird": "~3.4.3"
+    "bluebird": "~3.4.3",
+    "iconv-lite": "~0.4.13"
   },
   "devDependencies": {},
   "scripts": {

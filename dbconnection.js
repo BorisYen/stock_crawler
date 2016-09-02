@@ -10,7 +10,7 @@ var sequelize = new Sequelize('stock', 'byan', 'byan', {
         max: config.db_pool_max,
         idle: config.db_pool_idle
     },
-    logging: logger.debug
+    logging: logger.info
 }) ;
 
 /**
@@ -40,7 +40,7 @@ exports.Stock = sequelize.define('stock', {
  * high: 最高價
  * low: 最低價
  * close: 收盤價
- * diff: 漲跌價差
+ * diff: 漲跌價差  - this could be null due to the data from twse is not a number.
  * transations: 成交筆數
  * pb_ratio: 股價淨值比
  * pe_ratio: 本益比
