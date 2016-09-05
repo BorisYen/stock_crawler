@@ -1,4 +1,4 @@
-var price_crawler = require('./lib/daily_price_crawler') ;
+var price_crawler = require('./lib/monthly_price_crawler') ;
 var stock_crawler = require('./lib/stock_list_crawler') ;
 var monthly_pbpe_crawler = require('./lib/monthly_pb_pe_crawler') ;
 var daily_pbpe_crawler = require('./lib/daily_pb_pe_crawler') ;
@@ -50,7 +50,7 @@ if(!config.init){
 function get_and_insert_daily_stock_info(stock_symbol){
     var cur_date = new Date() ;
     var cur_year = cur_date.getFullYear() ;
-    var year_range = config.db_create_year_count ;
+    var year_range = config.db_create_db_year_count ;
     var promise_list = [] ;
     var upsert_promise_list = [] ;
 
@@ -116,7 +116,7 @@ function create_db(offset, limit){
     }
 }
 
-create_db() ;
+// create_db() ;
 
 // monthly_pbpe_crawler.crawl({stock_symbol: '2353', year: 2016, month: 8}) ;
 // daily_pbpe_crawler.crawl(new Date(2016, 5, 4)) ;
