@@ -6,7 +6,7 @@ module.exports = {
     db_pool_min: 20,
     db_pool_max: 50,
     db_pool_idle: 100000,
-    db_create_db_year_count: 5,
+    db_create_db_year_count: 1,
 
     http_request_timeout: 20000
 }
