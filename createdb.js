@@ -14,34 +14,39 @@ var StockDailyInfo = db.StockDailyInfo ;
 // create schema
 db.sequelize.sync() ;
 
-function* stock_gen(offset, limit, crawler){
-    var offset = offset || 0 ;
-    var limit = limit || 1 ;
+// function* stock_gen(offset, limit, crawler){
+//     var offset = offset || 0 ;
+//     var limit = limit || 1 ;
 
-    while(true){
-        var stocks = yield Stock.findAll({offset: offset, limit: limit}) ;
-        var data_g = monthly_cralwer_data_gen(stocks, crawler) ;
+//     while(true){
+//         var stocks = yield Stock.findAll({offset: offset, limit: limit}) ;
+//         var data_g = monthly_cralwer_data_gen(stocks, crawler) ;
 
-        for(var crawl_data of data_g){
-            var crawl_results = yield crawl_data ;
-            var upsert_promises = [] ;
+//         for(var crawl_data of data_g){
+//             var crawl_results = yield crawl_data ;
+//             var upsert_promises = [] ;
 
-            crawl_results.forEach(function(it, idx, array){
-                 upsert_promises.push(StockDailyInfo.upsert(it).reflect()) ;
-            }) ;
+//             crawl_results.forEach(function(it, idx, array){
+//                  upsert_promises.push(StockDailyInfo.upsert(it).reflect()) ;
+//             }) ;
 
-            yield Promise.all(upsert_promises) ;
-        }
+//             yield Promise.all(upsert_promises) ;
+//         }
 
-        if(stocks.length > 0)
-            offset += limit ;
-        else
-            break ;
-    }
+//         if(stocks.length > 0)
+//             offset += limit ;
+//         else
+//             break ;
+//     }
 
-    console.log('leave stock generator') ;
-}
+//     console.log('leave stock generator') ;
+// }
 
+/**
+ * The project use Promise.all a lot.
+ * 
+ * This is util function to gather the result.
+ */
 function gather_promise_result(results){
     var ret = [] ;
 
@@ -108,7 +113,7 @@ function* daily_crawler_data_gen(crawler, start_date, end_date){
             promise_batch.push(crawler.crawl({date: q_date}).reflect()) ;
         }
 
-        if(offset%batch_size === 0){
+        if(offset !== 0 && offset%batch_size === 0){
             yield Promise.all(promise_batch).then(gather_promise_result) ;
             promise_batch = [] ;
         }
@@ -121,8 +126,9 @@ function* daily_crawler_data_gen(crawler, start_date, end_date){
     }
 }
 
-// daily_crawler_data_gen() ;
-
+/**
+ * This is used to save data to db. It wraps a db_model and use it to insert/update data.
+ */
 function batch_save(db_model){
     return function (data){
         var upsert_promises= [] ;
@@ -144,7 +150,9 @@ function batch_save(db_model){
     }
 }
 
-
+/**
+ * Iterate over the generator and perform an action on the result of each item from the generator.
+ */
 function iterate_generator(options){
     return new Promise(function(resolve, reject){
         if(!options.generator) throw new Error('No generator is specified.') ;
@@ -160,13 +168,13 @@ function iterate_generator(options){
                 next.value.then(action).then(function(d){
                     go(gen.next(d)) ;
 
-                    return null ;
+                    return null ;  // add a return clause here, so that the warning from promise can be supressed.
                 });
             } else {
                 next.value.then(function(d){
                     go(gen.next(d)) ;
 
-                    return null ;
+                    return null ;  // add a return clause here, so that the warning from promise can be supressed.
                 }) ;
             }
         }
