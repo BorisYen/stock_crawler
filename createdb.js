@@ -2,6 +2,7 @@ var monthly_price_crawler = require('./lib/monthly_price_crawler') ;
 var stock_crawler = require('./lib/stock_list_crawler') ;
 var monthly_pbpe_crawler = require('./lib/monthly_pb_pe_crawler') ;
 var daily_pbpe_crawler = require('./lib/daily_pb_pe_crawler') ;
+var daily_stock_load_security_lending_crawler = require('./lib/daily_stock_load_security_lending_crawler') ;
 var db = require('./dbconnection') ;
 var logger = require('./logging') ;
 var utils = require('./utils') ;
@@ -48,7 +49,7 @@ function gather_promise_result(results){
         if(pro.isFulfilled()){
             ret = ret.concat(pro.value()) ;
         } else {
-            logger.error(pro.reason()) ;
+            logger.error(pro.reason().message) ;
         }
     }) ;
 
@@ -158,11 +159,15 @@ function iterate_generator(options){
             if(action){
                 next.value.then(action).then(function(d){
                     go(gen.next(d)) ;
-                })
+
+                    return null ;
+                });
             } else {
                 next.value.then(function(d){
                     go(gen.next(d)) ;
-                })
+
+                    return null ;
+                }) ;
             }
         }
 
@@ -170,19 +175,25 @@ function iterate_generator(options){
     }) ;
 }
 
-iterate_generator({
-    generator: monthly_cralwer_data_gen, 
-    gen_args: [ [{id: '0050'}, {id: '0051'}], monthly_price_crawler], 
-    action: batch_save(StockDailyInfo)
-}).then(function(result){
-    console.log('done') ;
-}) ;
+// iterate_generator({
+//     generator: monthly_cralwer_data_gen, 
+//     gen_args: [ [{id: '0050'}, {id: '0051'}], monthly_price_crawler], 
+//     action: batch_save(StockDailyInfo)
+// }).then(function(result){
+//     console.log('done') ;
+// }) ;
 
 // iterate_generator({
 //     generator: daily_crawler_data_gen, 
 //     gen_args: [daily_pbpe_crawler, new Date()], 
 //     action: batch_save(StockDailyInfo)
 // }) ;
+ 
+iterate_generator({
+    generator: daily_crawler_data_gen, 
+    gen_args: [daily_stock_load_security_lending_crawler, new Date()], 
+    action: batch_save(StockDailyInfo)
+}) ;
 
 // stock_crawler.crawl().then(function(results){
 //     console.log(results) ;

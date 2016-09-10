@@ -45,6 +45,10 @@ exports.Stock = sequelize.define('stock', {
  * pb_ratio: 股價淨值比
  * pe_ratio: 本益比
  * yields: 殖利率
+ * stock_load_count: 融券賣出 成交數量
+ * stock_load_amount: 融券賣出 成交金額
+ * security_lending_count: 借券賣出 成交數量
+ * security_lending_amount: 借券賣出 成交金額
  */
 exports.StockDailyInfo = sequelize.define('stock_daily_info', {
     id: {
@@ -67,7 +71,11 @@ exports.StockDailyInfo = sequelize.define('stock_daily_info', {
     transations: Sequelize.INTEGER,
     pb_ratio: Sequelize.FLOAT,
     pe_ratio: Sequelize.FLOAT,
-    yields: Sequelize.FLOAT
+    yields: Sequelize.FLOAT,
+    stock_load_count: Sequelize.INTEGER,
+    stock_load_amount: Sequelize.BIGINT,
+    security_lending_count: Sequelize.INTEGER,
+    security_lending_amount: Sequelize.BIGINT
 },{
     tableName: 'stock_daily_info',
     timestamps: false

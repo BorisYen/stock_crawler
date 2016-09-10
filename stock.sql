@@ -1,3 +1,5 @@
+-- this file has no use now. 
+
 -- CREATE TABLE image
 -- (
 --   id    INT UNSIGNED NOT NULL AUTO_INCREMENT, # image ID number
