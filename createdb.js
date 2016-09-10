@@ -13,13 +13,25 @@ var StockDailyInfo = db.StockDailyInfo ;
 // create schema
 db.sequelize.sync() ;
 
-function* stock_gen(offset, limit){
+function* stock_gen(offset, limit, crawler){
     var offset = offset || 0 ;
     var limit = limit || 1 ;
 
     while(true){
         var stocks = yield Stock.findAll({offset: offset, limit: limit}) ;
-        
+        var data_g = monthly_cralwer_data_gen(stocks, crawler) ;
+
+        for(var crawl_data of data_g){
+            var crawl_results = yield crawl_data ;
+            var upsert_promises = [] ;
+
+            crawl_results.forEach(function(it, idx, array){
+                 upsert_promises.push(StockDailyInfo.upsert(it).reflect()) ;
+            }) ;
+
+            yield Promise.all(upsert_promises) ;
+        }
+
         if(stocks.length > 0)
             offset += limit ;
         else
@@ -29,123 +41,150 @@ function* stock_gen(offset, limit){
     console.log('leave stock generator') ;
 }
 
-function* data_gen(stocks){
-    var cur_year = new Date().getFullYear() ;
-    var year_range = config.db_create_db_year_count ;
+function gather_promise_result(results){
+    var ret = [] ;
+
+    results.forEach(function(pro, idx, array){
+        if(pro.isFulfilled()){
+            ret = ret.concat(pro.value()) ;
+        } else {
+            logger.error(pro.reason()) ;
+        }
+    }) ;
+
+    return ret ;
+}
+
+/**
+ * Get data for a year at a time. Focus on year for now.
+ * 
+ * TODO: make it more accurate when retrieving data.
+ */
+function* monthly_cralwer_data_gen(stocks, crawler, start_date, end_date){
+    var start_date = start_date || new Date() ;
+    var end_date = end_date || new Date(start_date.getFullYear()-config.db_create_db_year_count, start_date.getMonth(), start_date.getDate()) ;
+
+    if(start_date.getTime() <= end_date.getTime()) throw new Error('Start date <= End date') ;
+
+    var start_year = start_date.getFullYear() ;
+    var year_range = start_year - end_date.getFullYear() ;
     
     for(var i=0; i<stocks.length; i++){
         var promise_list = [] ;
 
-        for(var j = cur_year; j > (cur_year - year_range); j--){
-            promise_list.push(monthly_price_crawler.crawl({stock: stocks[i].getDataValue('id'), year: j}).reflect()) ;
+        for(var j = start_year; j > (start_year - year_range); j--){
+            promise_list.push(crawler.crawl({stock: stocks[i]['id'], year: j}).reflect()) ;
         }
 
-        yield Promise.all(promise_list) ;
+        yield Promise.all(promise_list).then(gather_promise_result) ;
     }
 }
 
-function save_data(db_model){
-    return function(data){
-        data.forEach(function(item, index, array){
-            if(item.isFulfilled()){
-                item.value().forEach(function(it, idx){
-                    upsert_promise_list.push(db_model.upsert(it).reflect()) ;
+/**
+ * 
+ */
+function* daily_crawler_data_gen(crawler, start_date, end_date){
+    var start_date = start_date || new Date() ;
+    var end_date = end_date || new Date(start_date.getFullYear()-config.db_create_db_year_count, start_date.getMonth(), start_date.getDate()) ;
+    
+    if(start_date.getTime() <= end_date.getTime()) throw new Error('Start date <= End date') ;
+
+    var cur_year = start_date.getFullYear() ;
+    var cur_month = start_date.getMonth() ;
+    var cur_day = start_date.getDate() ;
+    var batch_size = 1 ;
+    var offset = 0 ;
+    var promise_batch = [] ;
+
+    while(true){
+        var q_date = new Date(cur_year, cur_month, cur_day-offset) ;
+
+        console.log(q_date) ;
+        if(q_date.getTime() <= end_date.getTime()){
+             break ;
+        }
+        else{
+            promise_batch.push(crawler.crawl({date: q_date}).reflect()) ;
+        }
+
+        if(offset%batch_size === 0){
+            yield Promise.all(promise_batch).then(gather_promise_result) ;
+            promise_batch = [] ;
+        }
+
+        offset++ ;
+    }
+
+    if(promise_batch.length > 0){
+        yield Promise.all(promise_batch).then(gather_promise_result) ;
+    }
+}
+
+// daily_crawler_data_gen() ;
+
+function batch_save(db_model){
+    return function (data){
+        var upsert_promises= [] ;
+
+        data.forEach(function(it, idx, array){
+            upsert_promises.push(db_model.upsert(it).reflect()) ;
+        }) ;
+
+        return Promise.all(upsert_promises).then(function(results){
+            results.forEach(function(it, idx, array){
+                if(it.isRejected()){
+                    var err = it.reason() ;
+                    logger.error(err.message, err.sql) ;
+                }
+            }) ;
+
+            return true;
+        }) ;
+    }
+}
+
+
+function iterate_generator(options){
+    return new Promise(function(resolve, reject){
+        if(!options.generator) throw new Error('No generator is specified.') ;
+
+        var gen_args = options.gen_args ;
+        var gen = options.generator.apply(null, gen_args) ;
+        var action = options.action ;
+
+        function go(next){
+            if(next.done) return resolve() ;
+
+            if(action){
+                next.value.then(action).then(function(d){
+                    go(gen.next(d)) ;
                 })
             } else {
-                logger.error(item.reason()) ;
+                next.value.then(function(d){
+                    go(gen.next(d)) ;
+                })
             }
-        }) ;
+        }
 
-        return Promise.all(upsert_promise_list) ;
-    }
+        go(gen.next()) ;
+    }) ;
 }
 
-var stock_g = stock_gen(0, 2) ;
+iterate_generator({
+    generator: monthly_cralwer_data_gen, 
+    gen_args: [ [{id: '0050'}, {id: '0051'}], monthly_price_crawler], 
+    action: batch_save(StockDailyInfo)
+}).then(function(result){
+    console.log('done') ;
+}) ;
 
-function iterate_stock(stop){
-    var next = stock_g.next(stop) ;
+// iterate_generator({
+//     generator: daily_crawler_data_gen, 
+//     gen_args: [daily_pbpe_crawler, new Date()], 
+//     action: batch_save(StockDailyInfo)
+// }) ;
 
-    if(!next.done){
-        next.value.then(function(stocks){
-            var data_g = data_gen(stocks) ;
-
-            next_data_g() ;
-            function next_data_g(){
-                var data_g_next = data_g.next() ;
-
-                if(!data_g_next.done){
-                    data_g_next.value.then(function(data){
-                        //insert data here.
-
-                        next_data_g() ;
-                    })
-                } else {
-                    iterate_stock(stocks) ;
-                }
-            }
-        }) ;
-    }
-}
-
-iterate_stock() ;
-
-// function get_monthly_crawler_data(stocks){
-//     var cur_year = new Date().getFullYear() ;
-//     var year_range = config.db_create_db_year_count ;
-//     var promise_list = [] ;
-
-//     stocks.forEach(function(it, idx, array){
-//         for(var j = cur_year; j > (cur_year - year_range); j--){
-//             promise_list.push(monthly_price_crawler.crawl({stock: it.getDataValue('id'), year: j}).reflect()) ;
-//         }
-//     }) ;
-
-//     return Promise.all(promise_list) ;
-// }
-
-// function upsert_monthly_crawler_data(promise_results){
-//     var upsert_promise_list = [] ;
-
-//     promise_results.forEach(function(item, index, array){
-//         if(item.isFulfilled()){
-//             item.value().forEach(function(it, idx){
-//                 upsert_promise_list.push(StockDailyInfo.upsert(it).reflect()) ;
-//             })
-//         } else {
-//             logger.error(item.reason()) ;
-//         }
-//     }) ;
-
-//     return Promise.all(upsert_promise_list) ;
-// }
-
-
-
-// function save_stock_list(result){   
-//     var promise_list = [] ;
-
-//     result.forEach(function(item, index, array){
-//         promise_list.push(Stock.upsert(item).reflect()) ;
-//     }) ;
-
-//     return Promise.all(promise_list);
-// }
-
-// stock_crawler.crawl(new Date(2016, 6, 20)).then(save_stock_list).then(
-//     function(results){
-//         var not_fulfilled = [] ;
-//         for(var i=0; i < results.length; i++){
-//             if(!results[i].isFulfilled()){
-//                 not_fulfilled.push(''+i);
-//             }
-//         }
-
-//         if(not_fulfilled.length > 0){
-//             return logger.error(new Error('Items can not be save.', not_fulfilled)) ;
-//         } else {
-//             return logger.info('Insert stock list successfuly.') ;
-//         }
-//     }).catch(function(err){
-//         logger.error('Something wrong when init the stock list', err) ;
-//     });
+// stock_crawler.crawl().then(function(results){
+//     console.log(results) ;
+// }) ;
 
