@@ -10,7 +10,7 @@ var sequelize = new Sequelize('stock', 'byan', 'byan', {
         max: config.db_pool_max,
         idle: config.db_pool_idle
     },
-    logging: logger.info
+    logging: config.db_logging
 }) ;
 
 /**
@@ -78,6 +78,38 @@ exports.StockDailyInfo = sequelize.define('stock_daily_info', {
     security_lending_amount: Sequelize.BIGINT
 },{
     tableName: 'stock_daily_info',
+    timestamps: false
+}) ;
+
+
+/**
+ * date: 日期
+ * vol: 成交股數
+ * turnover: 成交金額
+ * open: 開盤價
+ * high: 最高價
+ * low: 最低價
+ * close: 收盤價
+ * diff: 漲跌價差 
+ * transations: 成交筆數
+ */
+
+exports.TAIEX = sequelize.define('stock_daily_info', {
+    date: {
+        type: Sequelize.DATE,
+        primaryKey: true,
+        allNull: false
+    },
+    vol: Sequelize.BIGINT,
+    turnover: Sequelize.BIGINT,
+    open: Sequelize.FLOAT,
+    high: Sequelize.FLOAT,
+    low: Sequelize.FLOAT,
+    close: Sequelize.FLOAT,
+    diff: Sequelize.FLOAT,
+    transations: Sequelize.INTEGER
+},{
+    tableName: 'taiex',
     timestamps: false
 }) ;
 

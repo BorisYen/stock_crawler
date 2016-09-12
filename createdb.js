@@ -3,6 +3,9 @@ var stock_crawler = require('./lib/stock_list_crawler') ;
 var monthly_pbpe_crawler = require('./lib/monthly_pb_pe_crawler') ;
 var daily_pbpe_crawler = require('./lib/daily_pb_pe_crawler') ;
 var daily_stock_load_security_lending_crawler = require('./lib/daily_stock_load_security_lending_crawler') ;
+var monthly_taiex_crawler = require('./lib/monthly_taiex_crawler') 
+var monthly_taiex_trade_crawler = require('./lib/monthly_taiex_trade_crawler') 
+var MonthlyStockDataCrawler = require('./lib/crawler_base').MonthlyStockDataCrawler ;
 var db = require('./dbconnection') ;
 var logger = require('./logging') ;
 var utils = require('./utils') ;
@@ -10,6 +13,7 @@ var Promise = require('bluebird') ;
 var config = require('./config') ;
 var Stock = db.Stock ;
 var StockDailyInfo = db.StockDailyInfo ;
+var TAIEX = db.TAIEX ;
 
 // create schema
 db.sequelize.sync() ;
@@ -68,18 +72,28 @@ function gather_promise_result(results){
  */
 function* monthly_cralwer_data_gen(stocks, crawler, start_date, end_date){
     var start_date = start_date || new Date() ;
-    var end_date = end_date || new Date(start_date.getFullYear()-config.db_create_db_year_count, start_date.getMonth(), start_date.getDate()) ;
+    var end_date = end_date || new Date(start_date.getFullYear()-config.create_db_year_range, start_date.getMonth(), start_date.getDate()) ;
 
     if(start_date.getTime() <= end_date.getTime()) throw new Error('Start date <= End date') ;
 
     var start_year = start_date.getFullYear() ;
     var year_range = start_year - end_date.getFullYear() ;
     
-    for(var i=0; i<stocks.length; i++){
+    if(crawler instanceof MonthlyStockDataCrawler){
+        for(var i=0; i<stocks.length; i++){
+            var promise_list = [] ;
+
+            for(var j = start_year; j > (start_year - year_range); j--){
+                promise_list.push(crawler.crawl({stock: stocks[i]['id'], year: j}).reflect()) ;
+            }
+
+            yield Promise.all(promise_list).then(gather_promise_result) ;
+        }
+    } else {
         var promise_list = [] ;
 
         for(var j = start_year; j > (start_year - year_range); j--){
-            promise_list.push(crawler.crawl({stock: stocks[i]['id'], year: j}).reflect()) ;
+            promise_list.push(crawler.crawl({year: j}).reflect()) ;
         }
 
         yield Promise.all(promise_list).then(gather_promise_result) ;
@@ -91,7 +105,7 @@ function* monthly_cralwer_data_gen(stocks, crawler, start_date, end_date){
  */
 function* daily_crawler_data_gen(crawler, start_date, end_date){
     var start_date = start_date || new Date() ;
-    var end_date = end_date || new Date(start_date.getFullYear()-config.db_create_db_year_count, start_date.getMonth(), start_date.getDate()) ;
+    var end_date = end_date || new Date(start_date.getFullYear()-config.create_db_year_range, start_date.getMonth(), start_date.getDate()) ;
     
     if(start_date.getTime() <= end_date.getTime()) throw new Error('Start date <= End date') ;
 
@@ -191,17 +205,33 @@ function iterate_generator(options){
 //     console.log('done') ;
 // }) ;
 
+iterate_generator({
+    generator: monthly_cralwer_data_gen, 
+    gen_args: [[], monthly_taiex_crawler], 
+    action: batch_save(TAIEX)
+}).then(function(result){
+    console.log('done') ;
+}) ;
+
+iterate_generator({
+    generator: monthly_cralwer_data_gen, 
+    gen_args: [[], monthly_taiex_trade_crawler], 
+    action: batch_save(TAIEX)
+}).then(function(result){
+    console.log('done') ;
+}) ;
+
 // iterate_generator({
 //     generator: daily_crawler_data_gen, 
 //     gen_args: [daily_pbpe_crawler, new Date()], 
 //     action: batch_save(StockDailyInfo)
 // }) ;
  
-iterate_generator({
-    generator: daily_crawler_data_gen, 
-    gen_args: [daily_stock_load_security_lending_crawler, new Date()], 
-    action: batch_save(StockDailyInfo)
-}) ;
+// iterate_generator({
+//     generator: daily_crawler_data_gen, 
+//     gen_args: [daily_stock_load_security_lending_crawler, new Date()], 
+//     action: batch_save(StockDailyInfo)
+// }) ;
 
 // stock_crawler.crawl().then(function(results){
 //     console.log(results) ;
