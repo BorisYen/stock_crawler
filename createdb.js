@@ -197,13 +197,16 @@ function iterate_generator(options){
     }) ;
 }
 
-// iterate_generator({
-//     generator: monthly_cralwer_data_gen, 
-//     gen_args: [ [{id: '0050'}, {id: '0051'}], monthly_price_crawler], 
-//     action: batch_save(StockDailyInfo)
-// }).then(function(result){
-//     console.log('done') ;
-// }) ;
+
+db.sequelize.sync().then(function(){
+
+iterate_generator({
+    generator: monthly_cralwer_data_gen, 
+    gen_args: [ [{id: '0050'}, {id: '0051'}], monthly_price_crawler], 
+    action: batch_save(StockDailyInfo)
+}).then(function(result){
+    console.log('done') ;
+}) ;
 
 iterate_generator({
     generator: monthly_cralwer_data_gen, 
@@ -236,4 +239,7 @@ iterate_generator({
 // stock_crawler.crawl().then(function(results){
 //     console.log(results) ;
 // }) ;
+
+})
+
 

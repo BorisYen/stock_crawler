@@ -2,15 +2,20 @@ var Sequelize = require("sequelize")
 var logger = require('./logging') ;
 var config = require('./config')
 
-var sequelize = new Sequelize('stock', 'byan', 'byan', {
-    dialect: config.db_dialect,
-    port: config.db_port,
+var is_test = process.env.NODE_ENV === 'test' ;
+var db = is_test? config.test_db_db: config.db_db ;
+var user = is_test? config.test_db_user: config.db_user ;
+var passwd = is_test? config.test_db_passwd: config.db_passwd ;
+
+var sequelize = new Sequelize(db, user, passwd, {
+    dialect: is_test? config.test_db_dialect: config.db_dialect,
+    port: is_test? config.test_db_port: config.db_port,
     pool: {
-        min: config.db_pool_min,
-        max: config.db_pool_max,
-        idle: config.db_pool_idle
+        min: is_test? config.test_db_pool_min: config.db_pool_min,
+        max: is_test? config.test_db_pool_max: config.db_pool_max,
+        idle: is_test? config.test_db_pool_idle: config.db_pool_idle
     },
-    logging: config.db_logging
+    logging: is_test? config.test_db_logging: config.db_logging
 }) ;
 
 /**
@@ -94,7 +99,7 @@ exports.StockDailyInfo = sequelize.define('stock_daily_info', {
  * transations: 成交筆數
  */
 
-exports.TAIEX = sequelize.define('stock_daily_info', {
+exports.TAIEX = sequelize.define('taiex', {
     date: {
         type: Sequelize.DATE,
         primaryKey: true,
