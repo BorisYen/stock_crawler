@@ -3,10 +3,56 @@ process.env.NODE_ENV = 'test' ;  // this needs to be the first line of the test 
 var db = require('../dbconnection') ;
 var assert = require('assert');
 var monthly_taiex_crawler = require('../lib/monthly_taiex_crawler') ;
+var daily_pbpe_crawler = require('../lib/daily_pb_pe_crawler') ;
+var monthly_price_crawler = require('../lib/monthly_price_crawler') ;
+var monthly_taiex_trade_crawler = require('../lib/monthly_taiex_trade_crawler') 
+var monthly_pbpe_crawler = require('../lib/monthly_pb_pe_crawler') ;
 var _ = require('lodash') ;
+var should = require('should') ;
+var Assertion = should.Assertion ;
 
+Assertion.add('coverAllMonthes', function(){
+    var month_list = {} ;
 
-describe('Array', function() {
+    this.obj.forEach(function(it, idx, array){
+        var month = it.date.getMonth() ;
+
+        if(!month_list[month]){
+            month_list[month] = 1 ;
+        }
+    }) ;
+
+    should(_.keys(month_list)).has.lengthOf(12) ;
+});
+
+Assertion.add('sameYearMonthDay', function(options){
+    should(options).not.empty() ;
+
+    function test(it){
+        if(options.year)
+            should(it.date.getFullYear()).match(options.year) ;
+
+        if(options.month)
+            should(it.date.getMonth()+1).match(options.month) ;
+
+        if(options.day)
+            should(it.date.getDate()).match(options.day) ;
+    }
+
+    if(_.isArray(this.obj)){
+        this.obj.forEach(function(it, idx, array){
+            should(it).has.property('date').and.it.is.Date() ;
+            test(it) ;
+        }) ;
+    } else {
+        should(this.obj).has.property('date').and.it.is.Date() ;
+        test(this.obj) ;
+    }
+})
+
+describe('Crawler Test', function() {
+    this.timeout(100000) ;
+
     before(function(){
       return db.sequelize.sync() ;
     }) ;
@@ -14,51 +60,136 @@ describe('Array', function() {
     describe('Monthly TAIEX Crawler', function() {
         describe('crawl data', function(){
             it('all data should be in the same month', function() {
-                return monthly_taiex_crawler.crawl({year: 2016, month: 5}).then(function(results){
-                    assert(results.length > 2, 'result is empty') ;
-                    
-                    results.forEach(function(it, idx, array){
-                        assert(it.date, 'no date in the item') ;
-                        assert(it.date instanceof Date, 'it.date is not an Date') ;
-
-                        assert.equal(it.date.getMonth(), 4, 'the month is not expected.') ;
-                    }) ;
-                }) ;
-	          });
+                return monthly_taiex_crawler.crawl({year: 2016, month: 5}).should.finally.be.an.Array().and.not.empty()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5}) ;
+	        });
 
             it('crawl data for a specific date (year, month, day)', function(){
-                return monthly_taiex_crawler.crawl({year: 2016, month: 5, day: 4}).then(function(result){
-                      assert(!_.isArray(result), 'result is can not be an Array') ;
-                      
-                      assert(result.date, 'no date in the result') ;
-                      assert(result.date instanceof Date, 'result.date is not an Date') ;
-
-                      assert.equal(result.date.getMonth(), 4, 'the month is not expected.') ;
-                      assert.equal(result.date.getDate(), 4, 'the month is not expected.') ;
-                }) ;
+                return monthly_taiex_crawler.crawl({year: 2016, month: 5, day: 4}).should.finally.not.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
             }) ;
 
             it('crawl data for a specific date (with a date object)', function(){
-                return monthly_taiex_crawler.crawl({date: new Date(2016, 4, 4)}).then(function(result){
-                      assert(!_.isArray(result), 'result is can not be an Array') ;
-                      
-                      assert(result.date, 'no date in the result') ;
-                      assert(result.date instanceof Date, 'result.date is not an Date') ;
-
-                      assert.equal(result.date.getMonth(), 4, 'the month is not expected.') ;
-                      assert.equal(result.date.getDate(), 4, 'the month is not expected.') ;
-                }) ;
+                return monthly_taiex_crawler.crawl({date: new Date(2016, 4, 4)}).should.finally.not.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
             }) ;
 
             it('crawl data for a date that should not have data.', function(){
-                return monthly_taiex_crawler.crawl({year: 2020, month: 5, day: 4}).then(function(result){
-                    throw new Error('can not reach here') ;
-                }).catch(function(err){
-                    if(err.message.indexOf('No data available') != -1)
-                        return true ;
-                    else throw err;
-                }) ;
+                return monthly_taiex_crawler.crawl({year: 2020, month: 5, day: 4}).should.be.rejectedWith(/No data available/) ;
+            }) ;
+
+            it('crawl data for a whole year.', function(){
+                return monthly_taiex_crawler.crawl({year: 2015}).should.finally.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2015}).and.coverAllMonthes() ;
             }) ;
         });
-	  });
+    });
+
+    describe('Monthly TAIEX Trade Crawler', function() {
+        describe('crawl data', function(){
+            it('all data should be in the same month', function() {
+                return monthly_taiex_trade_crawler.crawl({year: 2016, month: 5}).should.finally.be.an.Array().and.not.empty()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5}) ;
+	        });
+
+            it('crawl data for a specific date (year, month, day)', function(){
+                return monthly_taiex_trade_crawler.crawl({year: 2016, month: 5, day: 4}).should.finally.not.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
+            }) ;
+
+            it('crawl data for a specific date (with a date object)', function(){
+                return monthly_taiex_trade_crawler.crawl({date: new Date(2016, 4, 4)}).should.finally.not.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
+            }) ;
+
+            it('crawl data for a date that should not have data.', function(){
+                return monthly_taiex_trade_crawler.crawl({year: 2020, month: 5, day: 4}).should.be.rejectedWith(/No data available/) ;
+            }) ;
+
+            it('crawl data for a whole year.', function(){
+                return monthly_taiex_trade_crawler.crawl({year: 2015}).should.finally.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2015}).and.coverAllMonthes() ;
+            }) ;
+        });
+    });
+
+    describe('Daily PB PE Crawler', function() {
+        describe('crawl data', function(){
+            it('crawl data for a specific date with stock', function() {
+                return daily_pbpe_crawler.crawl({stock: '1101', date: new Date(2016, 4, 4)}).should.finally.not.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
+            });
+
+            it('crawl data for a specific date without stock', function() {
+                return daily_pbpe_crawler.crawl({date: new Date(2016, 4, 4)}).should.finally.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
+            });
+
+            it('crawl data for a specific date with stock which does not exist', function() {
+                return daily_pbpe_crawler.crawl({stock: '0000', date: new Date(2016, 4, 4)}).should.be.rejectedWith(/No data available/) ;
+            });
+
+            it('crawl data for a specific date (market is not opened on that date)', function() {
+                return daily_pbpe_crawler.crawl({date: new Date(2016, 8, 11)}).should.be.rejectedWith(/No data available/) ;
+            });
+        });
+	});
+
+    describe('Monthly PB PE Crawler', function() {
+        describe('crawl data', function(){
+            it('crawl data for a specific date with stock', function() {
+                return monthly_pbpe_crawler.crawl({stock: '1101', date: new Date(2016, 4, 4)}).should.finally.not.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
+            });
+
+            it('crawl data for a specific date with stock which does not exist', function() {
+                return monthly_pbpe_crawler.crawl({stock: '0000', date: new Date(2016, 4, 4)}).should.be.rejectedWith(/No data available/) ;
+            });
+
+            it('crawl data for a specific date (market is not opened on that date)', function() {
+                return monthly_pbpe_crawler.crawl({stock: '1101', date: new Date(2016, 8, 11)}).should.be.rejectedWith(/No data available/) ;
+            });
+
+            it('crawl data for a date without stock.', function(){
+                return monthly_price_crawler.crawl({year: 2016, month: 5, day: 4}).should.be.rejectedWith(/Stock Symbol not found/) ;
+            }) ;
+
+            it('crawl data for a whole year.', function(){
+                return monthly_pbpe_crawler.crawl({stock: '1101', year: 2015}).should.finally.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2015}).and.coverAllMonthes() ;
+            }) ;
+        });
+	});
+
+    describe('Monthly Price Crawler', function() {
+        describe('crawl data', function(){
+            it('all data should be in the same month', function() {
+                return monthly_price_crawler.crawl({stock: '0050', year: 2016, month: 5}).should.finally.be.an.Array().and.not.empty()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5}) ;
+	        });
+
+            it('crawl data for a specific date (year, month, day)', function(){
+                return monthly_price_crawler.crawl({stock: '0050', year: 2016, month: 5, day: 4}).should.finally.not.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
+            }) ;
+
+            it('crawl data for a specific date (with a date object)', function(){
+                return monthly_price_crawler.crawl({stock: '0050', date: new Date(2016, 4, 4)}).should.finally.not.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
+            }) ;
+
+            it('crawl data for a date that should not have data.', function(){
+                return monthly_price_crawler.crawl({stock: '0050', year: 2020, month: 5, day: 4}).should.be.rejectedWith(/No data available/) ;
+            }) ;
+
+            it('crawl data for a date without stock.', function(){
+                return monthly_price_crawler.crawl({year: 2016, month: 5, day: 4}).should.be.rejectedWith(/Stock Symbol not found/) ;
+            }) ;
+
+            it('crawl data for a whole year.', function(){
+                return monthly_price_crawler.crawl({stock: '0050', year: 2015}).should.finally.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2015}).and.coverAllMonthes() ;
+            }) ;
+        });
+    });
 });
