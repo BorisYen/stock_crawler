@@ -7,6 +7,7 @@ var daily_pbpe_crawler = require('../lib/daily_pb_pe_crawler') ;
 var monthly_price_crawler = require('../lib/monthly_price_crawler') ;
 var monthly_taiex_trade_crawler = require('../lib/monthly_taiex_trade_crawler') 
 var monthly_pbpe_crawler = require('../lib/monthly_pb_pe_crawler') ;
+var daily_stock_load_security_lending_crawler = require('../lib/daily_stock_load_security_lending_crawler') ;
 var _ = require('lodash') ;
 var should = require('should') ;
 var Assertion = should.Assertion ;
@@ -87,7 +88,7 @@ describe('Crawler Test', function() {
 
     describe('Monthly TAIEX Trade Crawler', function() {
         describe('crawl data', function(){
-            it('all data should be in the same month', function() {
+            it('crawl data for a specific date (year, month)', function() {
                 return monthly_taiex_trade_crawler.crawl({year: 2016, month: 5}).should.finally.be.an.Array().and.not.empty()
                     .and.have.sameYearMonthDay({year: 2016, month: 5}) ;
 	        });
@@ -113,33 +114,16 @@ describe('Crawler Test', function() {
         });
     });
 
-    describe('Daily PB PE Crawler', function() {
-        describe('crawl data', function(){
-            it('crawl data for a specific date with stock', function() {
-                return daily_pbpe_crawler.crawl({stock: '1101', date: new Date(2016, 4, 4)}).should.finally.not.be.an.Array()
-                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
-            });
-
-            it('crawl data for a specific date without stock', function() {
-                return daily_pbpe_crawler.crawl({date: new Date(2016, 4, 4)}).should.finally.be.an.Array()
-                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
-            });
-
-            it('crawl data for a specific date with stock which does not exist', function() {
-                return daily_pbpe_crawler.crawl({stock: '0000', date: new Date(2016, 4, 4)}).should.be.rejectedWith(/No data available/) ;
-            });
-
-            it('crawl data for a specific date (market is not opened on that date)', function() {
-                return daily_pbpe_crawler.crawl({date: new Date(2016, 8, 11)}).should.be.rejectedWith(/No data available/) ;
-            });
-        });
-	});
-
     describe('Monthly PB PE Crawler', function() {
         describe('crawl data', function(){
             it('crawl data for a specific date with stock', function() {
                 return monthly_pbpe_crawler.crawl({stock: '1101', date: new Date(2016, 4, 4)}).should.finally.not.be.an.Array()
                     .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
+            });
+
+            it('crawl data for a specific stock (year, month)', function() {
+                return monthly_pbpe_crawler.crawl({stock: '1101', year: 2016, month: 5}).should.finally.be.an.Array().and.not.empty()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5}) ;
             });
 
             it('crawl data for a specific date with stock which does not exist', function() {
@@ -192,4 +176,49 @@ describe('Crawler Test', function() {
             }) ;
         });
     });
+
+    describe('Daily Stock PB PE Crawler', function() {
+        describe('crawl data', function(){
+            it('crawl data for a specific date with stock', function() {
+                return daily_pbpe_crawler.crawl({stock: '1101', date: new Date(2016, 4, 4)}).should.finally.not.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
+            });
+
+            it('crawl data for a specific date without stock', function() {
+                return daily_pbpe_crawler.crawl({date: new Date(2016, 4, 4)}).should.finally.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
+            });
+
+            it('crawl data for a specific date with stock which does not exist', function() {
+                return daily_pbpe_crawler.crawl({stock: '0000', date: new Date(2016, 4, 4)}).should.be.rejectedWith(/No data available/) ;
+            });
+
+            it('crawl data for a specific date (market is not opened on that date)', function() {
+                return daily_pbpe_crawler.crawl({date: new Date(2016, 8, 11)}).should.be.rejectedWith(/No data available/) ;
+            });
+        });
+	});
+
+    describe('Daily Stock Load and Security Crawler', function() {
+        describe('crawl data', function(){
+            it('crawl data for a specific date with stock', function() {
+                return daily_stock_load_security_lending_crawler.crawl({stock: '1101', date: new Date(2016, 4, 4)}).should.finally.not.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
+            });
+
+            it('crawl data for a specific date without stock', function() {
+                return daily_stock_load_security_lending_crawler.crawl({date: new Date(2016, 4, 4)}).should.finally.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2016, month: 5, day: 4}) ;
+            });
+
+            it('crawl data for a specific date with stock which does not exist', function() {
+                return daily_stock_load_security_lending_crawler.crawl({stock: '0000', date: new Date(2016, 4, 4)}).should.be.rejectedWith(/No data available/) ;
+            });
+
+            it('crawl data for a specific date (market is not opened on that date)', function() {
+                return daily_stock_load_security_lending_crawler.crawl({date: new Date(2016, 8, 11)}).should.be.rejectedWith(/No data available/) ;
+            });
+        });
+	});
+
 });
