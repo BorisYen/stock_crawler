@@ -15,9 +15,6 @@ var Stock = db.Stock ;
 var StockDailyInfo = db.StockDailyInfo ;
 var TAIEX = db.TAIEX ;
 
-// create schema
-db.sequelize.sync() ;
-
 // function* stock_gen(offset, limit, crawler){
 //     var offset = offset || 0 ;
 //     var limit = limit || 1 ;
@@ -112,7 +109,7 @@ function* daily_crawler_data_gen(crawler, start_date, end_date){
     var cur_year = start_date.getFullYear() ;
     var cur_month = start_date.getMonth() ;
     var cur_day = start_date.getDate() ;
-    var batch_size = 1 ;
+    var batch_size = 2 ;
     var offset = 0 ;
     var promise_batch = [] ;
 
@@ -158,8 +155,9 @@ function batch_save(db_model){
                     logger.error(err.message, err.sql) ;
                 }
             }) ;
-
-            return true;
+            upsert_promises = null ;  // this seems to cause some sort memory leak.  TODO: need to get to the bottom of it.
+            results = null ;
+            return data;
         }) ;
     }
 }
@@ -169,7 +167,7 @@ function batch_save(db_model){
  */
 function iterate_generator(options){
     return new Promise(function(resolve, reject){
-        if(!options.generator) throw new Error('No generator is specified.') ;
+        if(!options.generator) reject(new Error('No generator is specified.')) ;
 
         var gen_args = options.gen_args ;
         var gen = options.generator.apply(null, gen_args) ;
@@ -181,7 +179,7 @@ function iterate_generator(options){
             if(action){
                 next.value.then(action).then(function(d){
                     go(gen.next(d)) ;
-
+                    // setTimeout(go, 100, gen.next()) ;
                     return null ;  // add a return clause here, so that the warning from promise can be supressed.
                 });
             } else {
@@ -200,46 +198,63 @@ function iterate_generator(options){
 
 db.sequelize.sync().then(function(){
 
-iterate_generator({
-    generator: monthly_cralwer_data_gen, 
-    gen_args: [ [{id: '0050'}, {id: '0051'}], monthly_price_crawler], 
-    action: batch_save(StockDailyInfo)
-}).then(function(result){
-    console.log('done') ;
+    return stock_crawler.crawl().then(batch_save(Stock)) ;
+
+}).then(function(stocks){
+    var data_gen_promises = [] ;
+
+    var m_price_crawler_pro = iterate_generator({
+            generator: monthly_cralwer_data_gen, 
+            gen_args: [ stocks, monthly_price_crawler], 
+            action: batch_save(StockDailyInfo)
+        }).then(function(result){
+            console.log('done') ;
+        }) ;
+
+    // var m_taiex_crawler_pro = iterate_generator({
+    //         generator: monthly_cralwer_data_gen, 
+    //         gen_args: [[], monthly_taiex_crawler], 
+    //         action: batch_save(TAIEX)
+    //     }).then(function(result){
+    //         console.log('done') ;
+    //     }) ;
+
+    // var m_taiex_trade_pro = iterate_generator({
+    //         generator: monthly_cralwer_data_gen, 
+    //         gen_args: [[], monthly_taiex_trade_crawler], 
+    //         action: batch_save(TAIEX)
+    //     }).then(function(result){
+    //         console.log('done') ;
+    //     }) ;
+    
+    var d_pbpe_crawler_pro = iterate_generator({
+            generator: daily_crawler_data_gen, 
+            gen_args: [daily_pbpe_crawler, new Date(), new Date(2016, 7, 1)], 
+            action: batch_save(StockDailyInfo)
+        }) ;
+
+    d_pbpe_crawler_pro.then(function(){
+        if (global.gc) {
+            global.gc();
+        } else {
+            console.log('Garbage collection unavailable.  Pass --expose-gc '
+            + 'when launching node to enable forced garbage collection.');
+        }
+    })
+    // var d_stock_load_security_lending_pro = iterate_generator({
+    //         generator: daily_crawler_data_gen, 
+    //         gen_args: [daily_stock_load_security_lending_crawler, new Date()], 
+    //         action: batch_save(StockDailyInfo)
+    //     }) ;
+
+    // data_gen_promises.push(m_price_crawler_pro, m_taiex_crawler_pro, m_taiex_trade_pro, 
+    //      d_stock_load_security_lending_pro) ;
+
+    // return Promise.all(data_gen_promises) ;
 }) ;
 
-iterate_generator({
-    generator: monthly_cralwer_data_gen, 
-    gen_args: [[], monthly_taiex_crawler], 
-    action: batch_save(TAIEX)
-}).then(function(result){
-    console.log('done') ;
-}) ;
-
-iterate_generator({
-    generator: monthly_cralwer_data_gen, 
-    gen_args: [[], monthly_taiex_trade_crawler], 
-    action: batch_save(TAIEX)
-}).then(function(result){
-    console.log('done') ;
-}) ;
-
-// iterate_generator({
-//     generator: daily_crawler_data_gen, 
-//     gen_args: [daily_pbpe_crawler, new Date()], 
-//     action: batch_save(StockDailyInfo)
-// }) ;
- 
-// iterate_generator({
-//     generator: daily_crawler_data_gen, 
-//     gen_args: [daily_stock_load_security_lending_crawler, new Date()], 
-//     action: batch_save(StockDailyInfo)
-// }) ;
-
-// stock_crawler.crawl().then(function(results){
-//     console.log(results) ;
-// }) ;
-
-})
-
+// setInterval(function(){
+//     console.log('gc') ;
+//     global.gc() ;
+// }, 10000)
 

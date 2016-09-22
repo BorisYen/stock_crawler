@@ -12,7 +12,9 @@
             "preLaunchTask": null,
             "runtimeExecutable": null,
             "runtimeArgs": [
-                "--nolazy"
+                "--nolazy",
+                //"--trace_gc",
+                "--expose-gc"
             ],
             "env": {
                 "NODE_ENV": "development"
