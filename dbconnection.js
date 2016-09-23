@@ -54,6 +54,20 @@ exports.Stock = sequelize.define('stock', {
  * stock_load_amount: 融券賣出 成交金額
  * security_lending_count: 借券賣出 成交數量
  * security_lending_amount: 借券賣出 成交金額
+ * foreign_investors_buy: 外資買進股數
+ * foreign_investors_sell: 外資賣出股數
+ * foreign_investors_diff: 外資買賣超股數
+ * investment_trust_buy: 投信買進股數
+ * investment_trust_sell: 投信賣出股數
+ * investment_trust_diff: 投信買賣超股數
+ * dealer_overall_diff: 自營商買賣超股數
+ * dealer_buy: 自營商買進股數(自行買賣)
+ * dealer_sell: 自營商賣出股數(自行買賣)
+ * dealer_diff: 自營商買賣超股數(自行買賣)
+ * dealer_hedge_buy: 自營商買進股數(避險)
+ * dealer_hedge_sell: 自營商賣出股數(避險)
+ * dealer_hedge_diff: 自營商買賣超股數(避險)
+ * institution_overall_diff: 三大法人買賣超股數
  */
 exports.StockDailyInfo = sequelize.define('stock_daily_info', {
     id: {
@@ -80,7 +94,21 @@ exports.StockDailyInfo = sequelize.define('stock_daily_info', {
     stock_load_count: Sequelize.INTEGER,
     stock_load_amount: Sequelize.BIGINT,
     security_lending_count: Sequelize.INTEGER,
-    security_lending_amount: Sequelize.BIGINT
+    security_lending_amount: Sequelize.BIGINT,
+    foreign_investors_buy: Sequelize.INTEGER,
+    foreign_investors_sell: Sequelize.INTEGER,
+    foreign_investors_diff: Sequelize.INTEGER,
+    investment_trust_buy: Sequelize.INTEGER,
+    investment_trust_sell: Sequelize.INTEGER,
+    investment_trust_diff: Sequelize.INTEGER,
+    dealer_overall_diff: Sequelize.INTEGER,
+    dealer_buy: Sequelize.INTEGER,
+    dealer_sell: Sequelize.INTEGER,
+    dealer_diff: Sequelize.INTEGER,
+    dealer_hedge_buy: Sequelize.INTEGER,
+    dealer_hedge_sell: Sequelize.INTEGER,
+    dealer_hedge_diff: Sequelize.INTEGER,
+    institution_overall_diff: Sequelize.INTEGER
 },{
     tableName: 'stock_daily_info',
     timestamps: false

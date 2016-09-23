@@ -25,7 +25,7 @@ module.exports = {
     test_db_passwd: 'byan',
     test_db_db: 'stock_test',
 
-    create_db_year_range: 10,
+    create_db_year_range: 5,
 
     http_request_timeout: 60000
 }

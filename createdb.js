@@ -179,7 +179,7 @@ function iterate_generator(options){
             if(action){
                 next.value.then(action).then(function(d){
                     go(gen.next(d)) ;
-                    // setTimeout(go, 100, gen.next()) ;
+
                     return null ;  // add a return clause here, so that the warning from promise can be supressed.
                 });
             } else {
@@ -203,44 +203,44 @@ db.sequelize.sync().then(function(){
 }).then(function(stocks){
     var data_gen_promises = [] ;
 
-    var m_price_crawler_pro = iterate_generator({
+    // var m_price_crawler_pro = iterate_generator({
+    //         generator: monthly_cralwer_data_gen, 
+    //         gen_args: [ stocks, monthly_price_crawler], 
+    //         action: batch_save(StockDailyInfo)
+    //     }).then(function(result){
+    //         console.log('done') ;
+    //     }) ;
+
+    var m_taiex_crawler_pro = iterate_generator({
             generator: monthly_cralwer_data_gen, 
-            gen_args: [ stocks, monthly_price_crawler], 
-            action: batch_save(StockDailyInfo)
+            gen_args: [[], monthly_taiex_crawler], 
+            action: batch_save(TAIEX)
         }).then(function(result){
             console.log('done') ;
         }) ;
 
-    // var m_taiex_crawler_pro = iterate_generator({
-    //         generator: monthly_cralwer_data_gen, 
-    //         gen_args: [[], monthly_taiex_crawler], 
-    //         action: batch_save(TAIEX)
-    //     }).then(function(result){
-    //         console.log('done') ;
-    //     }) ;
-
-    // var m_taiex_trade_pro = iterate_generator({
-    //         generator: monthly_cralwer_data_gen, 
-    //         gen_args: [[], monthly_taiex_trade_crawler], 
-    //         action: batch_save(TAIEX)
-    //     }).then(function(result){
-    //         console.log('done') ;
-    //     }) ;
-    
-    var d_pbpe_crawler_pro = iterate_generator({
-            generator: daily_crawler_data_gen, 
-            gen_args: [daily_pbpe_crawler, new Date(), new Date(2016, 7, 1)], 
-            action: batch_save(StockDailyInfo)
+    var m_taiex_trade_pro = iterate_generator({
+            generator: monthly_cralwer_data_gen, 
+            gen_args: [[], monthly_taiex_trade_crawler], 
+            action: batch_save(TAIEX)
+        }).then(function(result){
+            console.log('done') ;
         }) ;
+    
+    // var d_pbpe_crawler_pro = iterate_generator({
+    //         generator: daily_crawler_data_gen, 
+    //         gen_args: [daily_pbpe_crawler, new Date()], 
+    //         action: batch_save(StockDailyInfo)
+    //     }) ;
 
-    d_pbpe_crawler_pro.then(function(){
-        if (global.gc) {
-            global.gc();
-        } else {
-            console.log('Garbage collection unavailable.  Pass --expose-gc '
-            + 'when launching node to enable forced garbage collection.');
-        }
-    })
+    // d_pbpe_crawler_pro.then(function(){
+    //     if (global.gc) {
+    //         global.gc();
+    //     } else {
+    //         console.log('Garbage collection unavailable.  Pass --expose-gc '
+    //         + 'when launching node to enable forced garbage collection.');
+    //     }
+    // })
     // var d_stock_load_security_lending_pro = iterate_generator({
     //         generator: daily_crawler_data_gen, 
     //         gen_args: [daily_stock_load_security_lending_crawler, new Date()], 
