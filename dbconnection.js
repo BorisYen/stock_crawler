@@ -187,7 +187,8 @@ function updateKDAll(){
             var price_arr = [] ;
 
             for(var j=(i-kd_days+1); j <= i; j++){
-                price_arr.push(records[j].get('close')) ;
+                price_arr.push(records[j].get('high')) ;
+                price_arr.push(records[j].get('low')) ;
             }
 
             var period_max = _.max(price_arr) ;
