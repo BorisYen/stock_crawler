@@ -184,21 +184,23 @@ function updateKDAll(){
         for(var i=(kd_days-1); i < records.length; i++){
             var cur_rec = records[i] ;
             var cal_rec_count = 0 ;
-            var price_arr = [] ;
+            var period_max = 0 ;
+            var period_min = Number.MAX_SAFE_INTEGER ;
 
             for(var j=(i-kd_days+1); j <= i; j++){
-                price_arr.push(records[j].get('high')) ;
-                price_arr.push(records[j].get('low')) ;
+                if(records[j].get('high') > period_max)
+                    period_max = records[j].get('high') ;
+                
+                if(records[j].get('low') < period_min)
+                    period_min = records[j].get('low') ;
             }
 
-            var period_max = _.max(price_arr) ;
-            var period_min = _.min(price_arr) ;
             var rsv = 100*((cur_rec.get('close') - period_min)/(period_max - period_min)) ;
             var pre_k = records[i-1].get('k9')? records[i-1].get('k9'): 50 ;
             var pre_d = records[i-1].get('d9')? records[i-1].get('d9'): 50 ;
             var cur_k = (rsv/3 + 2*pre_k/3) ;
 
-            console.log(cur_rec.get('date'), rsv, pre_k, pre_d, cur_k, price_arr, cur_rec.get('close'), period_max, period_min) ;
+            console.log(cur_rec.get('date'), rsv, pre_k, pre_d, cur_k, cur_rec.get('close'), period_max, period_min) ;
             cur_rec.set('k9', cur_k) ;
             cur_rec.set('d9', (cur_k/3 + 2*pre_d/3)) ;
         }
