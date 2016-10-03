@@ -217,15 +217,22 @@ db.sequelize.sync().then(function(){
             action: batch_save(TAIEX)
         }).then(function(result){
             console.log('done') ;
+            // TAIEX.findAll().then(function(records){
+            //     var abc ;
+            //     var cde ;
+            //     records[records.length - 1].updateMv() ;
+            // }) ;
+            TAIEX.updateMvAll() ;
+            TAIEX.updateKDAll() ;
         }) ;
 
-    var m_taiex_trade_pro = iterate_generator({
-            generator: monthly_cralwer_data_gen, 
-            gen_args: [[], monthly_taiex_trade_crawler], 
-            action: batch_save(TAIEX)
-        }).then(function(result){
-            console.log('done') ;
-        }) ;
+    // var m_taiex_trade_pro = iterate_generator({
+    //         generator: monthly_cralwer_data_gen, 
+    //         gen_args: [[], monthly_taiex_trade_crawler], 
+    //         action: batch_save(TAIEX)
+    //     }).then(function(result){
+    //         console.log('done') ;
+    //     }) ;
     
     // var d_pbpe_crawler_pro = iterate_generator({
     //         generator: daily_crawler_data_gen, 
