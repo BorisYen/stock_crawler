@@ -224,6 +224,7 @@ db.sequelize.sync().then(function(){
             // }) ;
             TAIEX.updateMvAll() ;
             TAIEX.updateKDAll() ;
+            TAIEX.updateRSIAll() ;
         }) ;
 
     // var m_taiex_trade_pro = iterate_generator({
