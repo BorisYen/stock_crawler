@@ -221,6 +221,7 @@ db.sequelize.sync().then(function(){
         }).then(function(result){
             console.log('done') ;
             TAIEX.updateMvAll().then(function(result){TAIEX.updateBiasAll()}) ;
+            TAIEX.updatePsyAll() ;
             // TAIEX.updateKDAll() ;
             // TAIEX.updateRSIAll() ;
         }) ;

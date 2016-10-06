@@ -198,7 +198,9 @@ exports.TAIEX = sequelize.define('taiex', {
     dn12: Sequelize.FLOAT,
     bias5: Sequelize.FLOAT,
     bias10: Sequelize.FLOAT,
-    bias20: Sequelize.FLOAT
+    bias20: Sequelize.FLOAT,
+    psy12: Sequelize.FLOAT,
+    psy24: Sequelize.FLOAT
 },{
     tableName: 'taiex',
     timestamps: false,
@@ -210,6 +212,7 @@ exports.TAIEX = sequelize.define('taiex', {
         updateKDAll: _updateKDAll,
         updateRSIAll: _updateRSIAll,
         updateBiasAll: _updateBiasAll,
+        updatePsyAll: _updatePsyAll,
         updateAll: _updateAll
     }
 }) ;
@@ -221,6 +224,18 @@ function _updateAll(records){
     return Promise.all(records.map(function(it, idx, array){
         return it.save().reflect() ;
     })) ;
+}
+
+function _updatePsyAll(stock){
+    var query_criteria = stock? {order: 'date desc', id: stock} : {order: 'date desc'} ;
+    var psy_days = _getAllDaysForAttr(_.keys(this.attributes), 'psy') ;
+    var that = this ;
+
+    return this.findAll(query_criteria).then(function(records){
+        tech_functions.updatePsyAll(records, psy_days) ;
+
+        return that.updateAll(records) ;
+    }) ;
 }
 
 function _updateBiasAll(stock){
