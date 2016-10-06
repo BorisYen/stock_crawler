@@ -217,11 +217,6 @@ db.sequelize.sync().then(function(){
             action: batch_save(TAIEX)
         }).then(function(result){
             console.log('done') ;
-            // TAIEX.findAll().then(function(records){
-            //     var abc ;
-            //     var cde ;
-            //     records[records.length - 1].updateMv() ;
-            // }) ;
             TAIEX.updateMvAll() ;
             TAIEX.updateKDAll() ;
             TAIEX.updateRSIAll() ;

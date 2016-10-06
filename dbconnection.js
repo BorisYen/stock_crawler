@@ -3,6 +3,7 @@ var logger = require('./logging') ;
 var config = require('./config') ;
 var _ = require('lodash') ;
 var Promise = require('bluebird') ;
+var tech_functions = require('./lib/stats/technical_cal_functions') ;
 
 var is_test = process.env.NODE_ENV === 'test' ;
 var db = is_test? config.test_db_db: config.db_db ;
@@ -184,163 +185,53 @@ exports.TAIEX = sequelize.define('taiex', {
     classMethods:{
         updateMvAll: _updateMvAll,
         updateKDAll: _updateKDAll,
-        updateRSIAll: _updateRSIAll
+        updateRSIAll: _updateRSIAll,
+        updateAll: _updateAll
     }
 }) ;
 
-/**
- * this is based on 
- * http://www.moneydj.com/KMDJ/Wiki/wikiViewer.aspx?keyid=1342fb37-760e-48b0-9f27-65674f6344c9
- */
-function _updateRSIAll(){
+function _updateAll(records){
+    if(!records) throw new Error('No record to update.') ;
+    if(!records instanceof Array) throw new Error('Argument is not an array.') ;
+
+    return Promise.all(records.map(function(it, idx, array){
+        return it.save().reflect() ;
+    })) ;
+}
+
+
+function _updateRSIAll(stock){
+    var query_criteria = stock? {order: 'date', id: stock} : {order: 'date'} ;
     var rsi_days = _getAllDaysForAttr(_.keys(this.attributes), 'rsi') ;
-    var tmp_attr_map = {} ;
+    var that = this ;
+    
+    return this.findAll(query_criteria).then(function(records){
+        tech_functions.updateRSIAll(records, rsi_days) ;
 
-    for(var i=0; i < rsi_days.length; i++){
-        tmp_attr_map[rsi_days[i]] = ['up'+rsi_days[i], 'dn'+rsi_days[i]] ;
-    }
-
-    return this.findAll({order: 'date'}).then(function(records){
-        var tmp_up = 0;
-        var tmp_down = 0;
-        var promise_list = [] ;
-
-        // reset up and dn
-        for(var i=0; i < records.length; i++){
-            for(var j=0; j < rsi_days.length; j++){
-                var attr_list = tmp_attr_map[rsi_days[j]] ;
-
-                records[i][attr_list[0]] = null ;
-                records[i][attr_list[1]] = null ;   
-            }
-        }
-
-        // init the first up and dn
-        var tmp_rsi_days = rsi_days.slice(0) ;
-        for(var i=1; i < records.length; i++){
-            var idx = i+1 ;
-            var diff = -1*(records[i].get('close') - records[i-1].get('close')) ;
-
-            if(diff > 0)
-                tmp_up += diff ;
-            else if(diff < 0)
-                tmp_down += diff ;
-
-            if(idx === tmp_rsi_days[0]){
-                records[i].set('up'+idx, tmp_up/idx) ;
-                records[i].set('dn'+idx, Math.abs(tmp_down/idx)) ;
-
-                tmp_rsi_days.splice(0, 1) ;
-
-                if(tmp_rsi_days.length === 0) 
-                    break ;
-            }
-        }
-
-        // calculate up, dn and rsi
-        for(var i=0; i < records.length; i++){
-            for(var j=0; j < rsi_days.length; j++){
-                var attr_list = tmp_attr_map[rsi_days[j]] ;
-
-                if(i !== 0 && (!records[i][attr_list[0]] && !records[i][attr_list[1]])){
-                    if(records[i-1][attr_list[0]] && records[i-1][attr_list[1]]){
-                        var diff = records[i].close - records[i-1].close ;
-
-                        if(diff > 0){
-                            tmp_up = diff ;
-                            tmp_down = 0 ;
-                        }
-                        else if(diff < 0){
-                            tmp_down = Math.abs(diff) ;
-                            tmp_up = 0 ;
-                        }
-
-                        var new_up = (tmp_up-records[i-1][attr_list[0]])/rsi_days[j] + records[i-1][attr_list[0]] ;
-                        var new_dn = (tmp_down-records[i-1][attr_list[1]])/rsi_days[j] + records[i-1][attr_list[1]] ;
-                        records[i].set(attr_list[0], new_up) ;
-                        records[i].set(attr_list[1], new_dn) ;
-                        records[i].set('rsi'+rsi_days[j], (100*new_up/(new_up+new_dn))) ;
-                    }
-                }
-
-                // if(records[i][attr_list[0]] && records[i][attr_list[1]]){
-                    
-                // }
-            }
-
-            promise_list.push(records[i].save().reflect()) ;
-        }
-
-        return Promise.all(promise_list) ;
+        return that.updateAll(records) ;
     }) ;
 }
 
-function _updateKDAll(){
-    return this.findAll({order: 'date'}).then(function(records){
-        if(records.length < 9) return ;
+function _updateKDAll(stock){
+    var query_criteria = stock? {order: 'date', id: stock} : {order: 'date'} ;
+    var kd_days = _getAllDaysForAttr(_.keys(this.attributes), 'k') ;
+    var that = this ;
 
-        var promise_list = [] ;
-        var kd_days = 9 ;
-        // KD9, there needs to be at least 9 records to calculate the KD.
-        for(var i=(kd_days-1); i < records.length; i++){
-            var cur_rec = records[i] ;
-            var cal_rec_count = 0 ;
-            var period_max = 0 ;
-            var period_min = Number.MAX_SAFE_INTEGER ;
+    return this.findAll(query_criteria).then(function(records){
+        tech_functions.updateKDAll(records, kd_days) ;
 
-            for(var j=(i-kd_days+1); j <= i; j++){
-                if(records[j].get('high') > period_max)
-                    period_max = records[j].get('high') ;
-                
-                if(records[j].get('low') < period_min)
-                    period_min = records[j].get('low') ;
-            }
-
-            var rsv = 100*((cur_rec.get('close') - period_min)/(period_max - period_min)) ;
-            var pre_k = records[i-1].get('k9')? records[i-1].get('k9'): 50 ;
-            var pre_d = records[i-1].get('d9')? records[i-1].get('d9'): 50 ;
-            var cur_k = (rsv/3 + 2*pre_k/3) ;
-
-            // console.log(cur_rec.get('date'), rsv, pre_k, pre_d, cur_k, cur_rec.get('close'), period_max, period_min) ;
-            cur_rec.set('k9', cur_k) ;
-            cur_rec.set('d9', (cur_k/3 + 2*pre_d/3)) ;
-
-            promise_list.push(cur_rec.save().reflect()) ;
-        }
-
-        return Promise.all(promise_list) ;
+        return that.updateAll(records) ;
     }) ;
 }
 
-function _updateMvAll(){
+function _updateMvAll(stock){
+    var query_criteria = stock? {order: 'date desc', id: stock} : {order: 'date desc'} ;
     var mv_days = _getAllDaysForAttr(_.keys(this.attributes), 'mv') ;
-    // getting all data might be a bit risky and memory consuming
-    // TODO: might need to break data into pieces.
-    return this.findAll({order: 'date desc'}).then(function(records){
-        var promise_list = [] ;
+    var that = this ;
+    return this.findAll(query_criteria).then(function(records){
+        tech_functions.updateMvAll(records, mv_days) ;
 
-        for(var i=0; i < records.length; i++){
-            var cur_rec = records[i] ;
-            var tmp_mv_days = mv_days.slice(0) ;
-            var tmp_sum = 0 ;
-
-            for(var j=i; j < records.length; j++){
-                var idx = j-i+1 ;
-                tmp_sum += records[j].get('close') ;
-
-                if(idx === tmp_mv_days[0]){
-                    cur_rec.set('mv'+idx, tmp_sum/idx) ;
-                    tmp_mv_days.splice(0, 1) ;
-
-                    if(tmp_mv_days.length <= 0)
-                        break ; 
-                }
-            }
-
-            promise_list.push(cur_rec.save().reflect()) ;
-        }
-
-        return Promise.all(promise_list) ;
+        return that.updateAll(records) ;
     }) ;
 }
 
@@ -377,7 +268,11 @@ function _getAllDaysForAttr(keys, attrPrefix){
 
     keys.forEach(function(it, idx, array){
         if(it.startsWith(attrPrefix)){
-            ret.push(parseInt(it.slice(attrPrefix.length))) ;
+            try{
+                ret.push(parseInt(it.slice(attrPrefix.length))) ;
+            } catch(err){
+                logger.warn('Attribute %s is not ends with a number', it) ;
+            }
         }
     }) ;
 
