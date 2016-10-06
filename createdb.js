@@ -205,10 +205,13 @@ db.sequelize.sync().then(function(){
 
     // var m_price_crawler_pro = iterate_generator({
     //         generator: monthly_cralwer_data_gen, 
-    //         gen_args: [ stocks, monthly_price_crawler], 
+    //         gen_args: [ [{id: '0050'}], monthly_price_crawler], 
     //         action: batch_save(StockDailyInfo)
     //     }).then(function(result){
     //         console.log('done') ;
+    //         StockDailyInfo.updateMvAll('0050') ;
+    //         StockDailyInfo.updateKDAll('0050') ;
+    //         StockDailyInfo.updateRSIAll('0050') ;
     //     }) ;
 
     var m_taiex_crawler_pro = iterate_generator({
@@ -217,9 +220,9 @@ db.sequelize.sync().then(function(){
             action: batch_save(TAIEX)
         }).then(function(result){
             console.log('done') ;
-            TAIEX.updateMvAll() ;
-            TAIEX.updateKDAll() ;
-            TAIEX.updateRSIAll() ;
+            TAIEX.updateMvAll().then(function(result){TAIEX.updateBiasAll()}) ;
+            // TAIEX.updateKDAll() ;
+            // TAIEX.updateRSIAll() ;
         }) ;
 
     // var m_taiex_trade_pro = iterate_generator({

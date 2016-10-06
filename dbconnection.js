@@ -112,12 +112,26 @@ exports.StockDailyInfo = sequelize.define('stock_daily_info', {
     dealer_hedge_sell: Sequelize.INTEGER,
     dealer_hedge_diff: Sequelize.INTEGER,
     institution_overall_diff: Sequelize.INTEGER,
-    mv5: Sequelize.FLOAT,
-    mv10: Sequelize.FLOAT,
-    mv20: Sequelize.FLOAT,
-    mv60: Sequelize.FLOAT,
-    mv120: Sequelize.FLOAT,
-    mv240: Sequelize.FLOAT
+    ma5: Sequelize.FLOAT,
+    ma10: Sequelize.FLOAT,
+    ma20: Sequelize.FLOAT,
+    ma60: Sequelize.FLOAT,
+    ma120: Sequelize.FLOAT,
+    ma240: Sequelize.FLOAT,
+    k9: Sequelize.FLOAT,
+    d9: Sequelize.FLOAT,
+    rsi5: Sequelize.FLOAT,
+    rsi10: Sequelize.FLOAT,
+    rsi6: Sequelize.FLOAT,
+    rsi12: Sequelize.FLOAT,
+    up5: Sequelize.FLOAT,
+    up6: Sequelize.FLOAT,
+    up10: Sequelize.FLOAT,
+    up12: Sequelize.FLOAT,
+    dn5: Sequelize.FLOAT,
+    dn6: Sequelize.FLOAT,
+    dn10: Sequelize.FLOAT,
+    dn12: Sequelize.FLOAT
 },{
     tableName: 'stock_daily_info',
     timestamps: false,
@@ -125,10 +139,16 @@ exports.StockDailyInfo = sequelize.define('stock_daily_info', {
         updateMv: _updateMv
     },
     classMethods:{
-        updateMvAll: _updateMvAll
+        updateMvAll: function(stock){ _stockMethodPreCheck(stock); return _updateMvAll.call(this, stock) ;},
+        updateKDAll: function(stock){ _stockMethodPreCheck(stock); return _updateKDAll.call(this, stock) ;},
+        updateRSIAll: function(stock){ _stockMethodPreCheck(stock); return _updateRSIAll.call(this, stock) ;},
+        updateAll: _updateAll
     }
 }) ;
 
+function _stockMethodPreCheck(stock){
+    if(!stock) throw Error('Stock id must be specified.') ;
+}
 
 /**
  * date: 日期
@@ -156,12 +176,12 @@ exports.TAIEX = sequelize.define('taiex', {
     close: Sequelize.FLOAT,
     diff: Sequelize.FLOAT,
     transations: Sequelize.INTEGER,
-    mv5: Sequelize.FLOAT,
-    mv10: Sequelize.FLOAT,
-    mv20: Sequelize.FLOAT,
-    mv60: Sequelize.FLOAT,
-    mv120: Sequelize.FLOAT,
-    mv240: Sequelize.FLOAT,
+    ma5: Sequelize.FLOAT,
+    ma10: Sequelize.FLOAT,
+    ma20: Sequelize.FLOAT,
+    ma60: Sequelize.FLOAT,
+    ma120: Sequelize.FLOAT,
+    ma240: Sequelize.FLOAT,
     k9: Sequelize.FLOAT,
     d9: Sequelize.FLOAT,
     rsi5: Sequelize.FLOAT,
@@ -175,7 +195,10 @@ exports.TAIEX = sequelize.define('taiex', {
     dn5: Sequelize.FLOAT,
     dn6: Sequelize.FLOAT,
     dn10: Sequelize.FLOAT,
-    dn12: Sequelize.FLOAT
+    dn12: Sequelize.FLOAT,
+    bias5: Sequelize.FLOAT,
+    bias10: Sequelize.FLOAT,
+    bias20: Sequelize.FLOAT
 },{
     tableName: 'taiex',
     timestamps: false,
@@ -186,6 +209,7 @@ exports.TAIEX = sequelize.define('taiex', {
         updateMvAll: _updateMvAll,
         updateKDAll: _updateKDAll,
         updateRSIAll: _updateRSIAll,
+        updateBiasAll: _updateBiasAll,
         updateAll: _updateAll
     }
 }) ;
@@ -199,6 +223,17 @@ function _updateAll(records){
     })) ;
 }
 
+function _updateBiasAll(stock){
+    var query_criteria = stock? {order: 'date', id: stock} : {order: 'date'} ;
+    var bias_days = _getAllDaysForAttr(_.keys(this.attributes), 'bias') ;
+    var that = this ;
+    
+    return this.findAll(query_criteria).then(function(records){
+        tech_functions.updateBiasAll(records, bias_days) ;
+
+        return that.updateAll(records) ;
+    }) ;
+}
 
 function _updateRSIAll(stock){
     var query_criteria = stock? {order: 'date', id: stock} : {order: 'date'} ;
@@ -226,7 +261,7 @@ function _updateKDAll(stock){
 
 function _updateMvAll(stock){
     var query_criteria = stock? {order: 'date desc', id: stock} : {order: 'date desc'} ;
-    var mv_days = _getAllDaysForAttr(_.keys(this.attributes), 'mv') ;
+    var mv_days = _getAllDaysForAttr(_.keys(this.attributes), 'ma') ;
     var that = this ;
     return this.findAll(query_criteria).then(function(records){
         tech_functions.updateMvAll(records, mv_days) ;
@@ -236,7 +271,7 @@ function _updateMvAll(stock){
 }
 
 function _updateMv(){
-    var mv_days = _getAllDaysForAttr(_.keys(this.Model.attributes), 'mv') ;
+    var mv_days = _getAllDaysForAttr(_.keys(this.Model.attributes), 'ma') ;
     var max_mv = mv_days[mv_days.length - 1] ;
     var that = this ;
 
