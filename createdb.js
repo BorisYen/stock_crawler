@@ -203,16 +203,18 @@ db.sequelize.sync().then(function(){
 }).then(function(stocks){
     var data_gen_promises = [] ;
 
-    // var m_price_crawler_pro = iterate_generator({
-    //         generator: monthly_cralwer_data_gen, 
-    //         gen_args: [ [{id: '0050'}], monthly_price_crawler], 
-    //         action: batch_save(StockDailyInfo)
-    //     }).then(function(result){
-    //         console.log('done') ;
-    //         StockDailyInfo.updateMvAll('0050') ;
-    //         StockDailyInfo.updateKDAll('0050') ;
-    //         StockDailyInfo.updateRSIAll('0050') ;
-    //     }) ;
+    var m_price_crawler_pro = iterate_generator({
+            generator: monthly_cralwer_data_gen, 
+            gen_args: [ [{id: '0050'}], monthly_price_crawler], 
+            action: batch_save(StockDailyInfo)
+        }).then(function(result){
+            console.log('done') ;
+            StockDailyInfo.updateMvAll('0050').then(function(result){StockDailyInfo.updateBiasAll('0050')}) ;
+            StockDailyInfo.updateMACDAll('0050') ;
+            StockDailyInfo.updateKDAll('0050') ;
+            StockDailyInfo.updateRSIAll('0050') ;
+            StockDailyInfo.updatePsyAll('0050') ;
+        }) ;
 
     var m_taiex_crawler_pro = iterate_generator({
             generator: monthly_cralwer_data_gen, 
@@ -221,9 +223,10 @@ db.sequelize.sync().then(function(){
         }).then(function(result){
             console.log('done') ;
             TAIEX.updateMvAll().then(function(result){TAIEX.updateBiasAll()}) ;
+            TAIEX.updateMACDAll() ;
+            TAIEX.updateKDAll() ;
+            TAIEX.updateRSIAll() ;
             TAIEX.updatePsyAll() ;
-            // TAIEX.updateKDAll() ;
-            // TAIEX.updateRSIAll() ;
         }) ;
 
     // var m_taiex_trade_pro = iterate_generator({

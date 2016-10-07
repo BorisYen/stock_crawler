@@ -131,7 +131,16 @@ exports.StockDailyInfo = sequelize.define('stock_daily_info', {
     dn5: Sequelize.FLOAT,
     dn6: Sequelize.FLOAT,
     dn10: Sequelize.FLOAT,
-    dn12: Sequelize.FLOAT
+    dn12: Sequelize.FLOAT,
+    bias5: Sequelize.FLOAT,
+    bias10: Sequelize.FLOAT,
+    bias20: Sequelize.FLOAT,
+    psy12: Sequelize.FLOAT,
+    psy24: Sequelize.FLOAT,
+    macd_12_26_9: Sequelize.FLOAT, 
+    ema12: Sequelize.FLOAT,
+    ema26: Sequelize.FLOAT,
+    macd_diff9: Sequelize.FLOAT
 },{
     tableName: 'stock_daily_info',
     timestamps: false,
@@ -139,9 +148,14 @@ exports.StockDailyInfo = sequelize.define('stock_daily_info', {
         updateMv: _updateMv
     },
     classMethods:{
+        getPriceAttrs: _getPriceAttrs,
+        getMaAttrs: _getMaAttrs,
         updateMvAll: function(stock){ _stockMethodPreCheck(stock); return _updateMvAll.call(this, stock) ;},
         updateKDAll: function(stock){ _stockMethodPreCheck(stock); return _updateKDAll.call(this, stock) ;},
         updateRSIAll: function(stock){ _stockMethodPreCheck(stock); return _updateRSIAll.call(this, stock) ;},
+        updateBiasAll: function(stock){ _stockMethodPreCheck(stock); return _updateBiasAll.call(this, stock) ;},
+        updatePsyAll: function(stock){ _stockMethodPreCheck(stock); return _updatePsyAll.call(this, stock) ;},
+        updateMACDAll: function(stock){ _stockMethodPreCheck(stock); return _updateMACDAll.call(this, stock) ;},
         updateAll: _updateAll
     }
 }) ;
@@ -200,7 +214,11 @@ exports.TAIEX = sequelize.define('taiex', {
     bias10: Sequelize.FLOAT,
     bias20: Sequelize.FLOAT,
     psy12: Sequelize.FLOAT,
-    psy24: Sequelize.FLOAT
+    psy24: Sequelize.FLOAT,
+    macd_12_26_9: Sequelize.FLOAT, 
+    ema12: Sequelize.FLOAT,
+    ema26: Sequelize.FLOAT,
+    macd_diff9: Sequelize.FLOAT
 },{
     tableName: 'taiex',
     timestamps: false,
@@ -208,14 +226,18 @@ exports.TAIEX = sequelize.define('taiex', {
         updateMv: _updateMv
     },
     classMethods:{
+        getPriceAttrs: _getPriceAttrs,
+        getMaAttrs: _getMaAttrs,
         updateMvAll: _updateMvAll,
         updateKDAll: _updateKDAll,
         updateRSIAll: _updateRSIAll,
         updateBiasAll: _updateBiasAll,
         updatePsyAll: _updatePsyAll,
+        updateMACDAll: _updateMACDAll,
         updateAll: _updateAll
     }
 }) ;
+
 
 function _updateAll(records){
     if(!records) throw new Error('No record to update.') ;
@@ -226,11 +248,24 @@ function _updateAll(records){
     })) ;
 }
 
+function _updateMACDAll(stock){
+    var query_criteria = stock? {order: 'date', id: stock} : {order: 'date'} ;
+    var that = this ;
+
+    query_criteria.attributes = stock? this.getPriceAttrs().concat('date').concat('id'): this.getPriceAttrs().concat('date') ;
+    return this.findAll(query_criteria).then(function(records){
+        tech_functions.updateMACDAll(records, [12, 26, 9]) ;
+
+        return that.updateAll(records) ;
+    }) ;
+}
+
 function _updatePsyAll(stock){
     var query_criteria = stock? {order: 'date desc', id: stock} : {order: 'date desc'} ;
     var psy_days = _getAllDaysForAttr(_.keys(this.attributes), 'psy') ;
     var that = this ;
 
+    query_criteria.attributes = stock? this.getPriceAttrs().concat('date').concat('id'): this.getPriceAttrs().concat('date') ;
     return this.findAll(query_criteria).then(function(records){
         tech_functions.updatePsyAll(records, psy_days) ;
 
@@ -243,6 +278,7 @@ function _updateBiasAll(stock){
     var bias_days = _getAllDaysForAttr(_.keys(this.attributes), 'bias') ;
     var that = this ;
     
+    query_criteria.attributes = stock? this.getPriceAttrs().concat('date').concat(this.getMaAttrs()).concat('id'): this.getPriceAttrs().concat('date').concat(this.getMaAttrs()) ;
     return this.findAll(query_criteria).then(function(records){
         tech_functions.updateBiasAll(records, bias_days) ;
 
@@ -255,6 +291,7 @@ function _updateRSIAll(stock){
     var rsi_days = _getAllDaysForAttr(_.keys(this.attributes), 'rsi') ;
     var that = this ;
     
+    query_criteria.attributes = stock? this.getPriceAttrs().concat('date').concat('id'): this.getPriceAttrs().concat('date') ;
     return this.findAll(query_criteria).then(function(records){
         tech_functions.updateRSIAll(records, rsi_days) ;
 
@@ -267,6 +304,7 @@ function _updateKDAll(stock){
     var kd_days = _getAllDaysForAttr(_.keys(this.attributes), 'k') ;
     var that = this ;
 
+    query_criteria.attributes = stock? this.getPriceAttrs().concat('date').concat('id'): this.getPriceAttrs().concat('date') ;
     return this.findAll(query_criteria).then(function(records){
         tech_functions.updateKDAll(records, kd_days) ;
 
@@ -278,6 +316,8 @@ function _updateMvAll(stock){
     var query_criteria = stock? {order: 'date desc', id: stock} : {order: 'date desc'} ;
     var mv_days = _getAllDaysForAttr(_.keys(this.attributes), 'ma') ;
     var that = this ;
+
+    query_criteria.attributes = stock? this.getPriceAttrs().concat('date').concat('id'): this.getPriceAttrs().concat('date') ;
     return this.findAll(query_criteria).then(function(records){
         tech_functions.updateMvAll(records, mv_days) ;
 
@@ -313,16 +353,39 @@ function _updateMv(){
     })
 }
 
+function _getPriceAttrs(){
+    return ['open', 'high', 'low', 'close'] ;
+}
+
+function _getMaAttrs(){
+    return _getAttrWithPrefix(_.keys(this.attributes), "ma") ;
+}
+
+// this only works for attributes that look like "attrPrefix"+"number"
+function _getAttrWithPrefix(keys, attrPrefix){
+    var ret = [] ;
+
+    keys.forEach(function(it, idx, array){
+        if(it.startsWith(attrPrefix)){
+            var day = parseInt(it.slice(attrPrefix.length)) ;
+
+            if(!isNaN(day))
+                ret.push(it) ;
+        }
+    }) ;
+
+    return ret ;
+}
+
 function _getAllDaysForAttr(keys, attrPrefix){
     var ret = [] ;
 
     keys.forEach(function(it, idx, array){
         if(it.startsWith(attrPrefix)){
-            try{
-                ret.push(parseInt(it.slice(attrPrefix.length))) ;
-            } catch(err){
-                logger.warn('Attribute %s is not ends with a number', it) ;
-            }
+            var day = parseInt(it.slice(attrPrefix.length)) ;
+
+            if(!isNaN(day))
+                ret.push(day) ;
         }
     }) ;
 
