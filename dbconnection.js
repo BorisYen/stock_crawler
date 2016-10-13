@@ -218,7 +218,10 @@ exports.TAIEX = sequelize.define('taiex', {
     macd_12_26_9: Sequelize.FLOAT, 
     ema12: Sequelize.FLOAT,
     ema26: Sequelize.FLOAT,
-    macd_diff9: Sequelize.FLOAT
+    macd_diff9: Sequelize.FLOAT,
+    p_di14: Sequelize.FLOAT,
+    n_di14: Sequelize.FLOAT,
+    dx14: Sequelize.FLOAT
 },{
     tableName: 'taiex',
     timestamps: false,
@@ -234,6 +237,7 @@ exports.TAIEX = sequelize.define('taiex', {
         updateBiasAll: _updateBiasAll,
         updatePsyAll: _updatePsyAll,
         updateMACDAll: _updateMACDAll,
+        updateDMIAll: _updateDMIAll,
         updateAll: _updateAll
     }
 }) ;
@@ -246,6 +250,18 @@ function _updateAll(records){
     return Promise.all(records.map(function(it, idx, array){
         return it.save().reflect() ;
     })) ;
+}
+
+function _updateDMIAll(stock){
+    var query_criteria = stock? {order: 'date', id: stock} : {order: 'date'} ;
+    var that = this ;
+
+    query_criteria.attributes = stock? this.getPriceAttrs().concat('date').concat('id'): this.getPriceAttrs().concat('date') ;
+    return this.findAll(query_criteria).then(function(records){
+        tech_functions.updateDMIAll(records, [14]) ;
+
+        return that.updateAll(records) ;
+    }) ;
 }
 
 function _updateMACDAll(stock){
