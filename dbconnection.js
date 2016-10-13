@@ -221,6 +221,8 @@ exports.TAIEX = sequelize.define('taiex', {
     macd_diff9: Sequelize.FLOAT,
     p_di14: Sequelize.FLOAT,
     n_di14: Sequelize.FLOAT,
+    p_dm14: Sequelize.FLOAT,
+    n_dm14: Sequelize.FLOAT,
     dx14: Sequelize.FLOAT
 },{
     tableName: 'taiex',
