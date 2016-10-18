@@ -30,3 +30,47 @@ exports.convertToUTC = function(text){
 exports.dataConvertWrapper = function(text, data){
 
 }
+
+exports.sortRecord = function(records, desc){
+    return records.sort(function(a, b){
+        if(desc){
+            if(a.date.getTime() < b.date.getTime()) return 1 ;
+            else if(a.date.getTime() > b.date.getTime()) return -1 ;
+            else return 0 ;
+        } else {
+            if(a.date.getTime() < b.date.getTime()) return -1 ;
+            else if(a.date.getTime() > b.date.getTime()) return 1 ;
+            else return 0 ;
+        }
+    }) ;
+}
+
+exports.sortDays = function(days, desc){
+    return days.sort(function(a, b){
+        if(desc){
+            if(a < b) return 1 ;
+            else if(a > b) return -1 ;
+            else return 0 ;
+        } else {
+            if(a < b) return -1 ;
+            else if(a > b) return 1 ;
+            else return 0 ;
+        }
+    }) ;
+}
+
+exports.getAttrArr = function(prefix, arr){
+    return arr.map(function(it, idx, array){
+        return prefix+it ;
+    })
+}
+
+exports.getAttrMap = function(prefix, arr){
+    var ret = {} ;
+
+    for(var i=0; i < arr.length; i++){
+        ret[arr[i]] = prefix+arr[i] ;
+    }
+    
+    return ret ;
+}

@@ -11,6 +11,7 @@ var logger = require('./logging') ;
 var utils = require('./utils') ;
 var Promise = require('bluebird') ;
 var config = require('./config') ;
+var agg = require('./lib/stats/aggregation') ;
 var Stock = db.Stock ;
 var StockDailyInfo = db.StockDailyInfo ;
 var TAIEX = db.TAIEX ;
@@ -227,7 +228,10 @@ db.sequelize.sync().then(function(){
             // TAIEX.updateKDAll() ;
             // TAIEX.updateRSIAll() ;
             // TAIEX.updatePsyAll() ;
-            TAIEX.updateDMIAll() ;
+            // TAIEX.updateDMIAll() ;
+            TAIEX.findAll().then(function(records){
+                console.log(agg.calculateMonthlyPrice(records)) ;
+            })
         }) ;
 
     // var m_taiex_trade_pro = iterate_generator({
