@@ -150,7 +150,7 @@ exports.StockDailyInfo = sequelize.define('stock_daily_info', {
     classMethods:{
         getPriceAttrs: _getPriceAttrs,
         getMaAttrs: _getMaAttrs,
-        updateMvAll: function(stock){ _stockMethodPreCheck(stock); return _updateMvAll.call(this, stock) ;},
+        updateMaAll: function(stock){ _stockMethodPreCheck(stock); return _updateMaAll.call(this, stock) ;},
         updateKDAll: function(stock){ _stockMethodPreCheck(stock); return _updateKDAll.call(this, stock) ;},
         updateRSIAll: function(stock){ _stockMethodPreCheck(stock); return _updateRSIAll.call(this, stock) ;},
         updateBiasAll: function(stock){ _stockMethodPreCheck(stock); return _updateBiasAll.call(this, stock) ;},
@@ -233,7 +233,7 @@ exports.TAIEX = sequelize.define('taiex', {
     classMethods:{
         getPriceAttrs: _getPriceAttrs,
         getMaAttrs: _getMaAttrs,
-        updateMvAll: _updateMvAll,
+        updateMaAll: _updateMaAll,
         updateKDAll: _updateKDAll,
         updateRSIAll: _updateRSIAll,
         updateBiasAll: _updateBiasAll,
@@ -330,14 +330,14 @@ function _updateKDAll(stock){
     }) ;
 }
 
-function _updateMvAll(stock){
+function _updateMaAll(stock){
     var query_criteria = stock? {order: 'date desc', id: stock} : {order: 'date desc'} ;
     var mv_days = _getAllDaysForAttr(_.keys(this.attributes), 'ma') ;
     var that = this ;
 
     query_criteria.attributes = stock? this.getPriceAttrs().concat('date').concat('id'): this.getPriceAttrs().concat('date') ;
     return this.findAll(query_criteria).then(function(records){
-        tech_functions.updateMvAll(records, mv_days) ;
+        tech_functions.updateMaAll(records, mv_days) ;
 
         return that.updateAll(records) ;
     }) ;

@@ -1,7 +1,6 @@
-process.env.NODE_ENV = 'test' ;  // this needs to be the first line of the test file.
+var test_common = require('./common_lib') ; // this needs to be the first line of the test file.
 
 var db = require('../dbconnection') ;
-var assert = require('assert');
 var monthly_taiex_crawler = require('../lib/crawlers/monthly_taiex_crawler') ;
 var daily_pbpe_crawler = require('../lib/crawlers/daily_pb_pe_crawler') ;
 var monthly_price_crawler = require('../lib/crawlers/monthly_price_crawler') ;
@@ -9,48 +8,6 @@ var monthly_taiex_trade_crawler = require('../lib/crawlers/monthly_taiex_trade_c
 var monthly_pbpe_crawler = require('../lib/crawlers/monthly_pb_pe_crawler') ;
 var daily_stock_load_security_lending_crawler = require('../lib/crawlers/daily_stock_load_security_lending_crawler') ;
 var daily_institution_trade_crawler = require('../lib/crawlers/daily_institution_trade_crawler') ;
-var _ = require('lodash') ;
-var should = require('should') ;
-var Assertion = should.Assertion ;
-
-Assertion.add('coverAllMonthes', function(){
-    var month_list = {} ;
-
-    this.obj.forEach(function(it, idx, array){
-        var month = it.date.getMonth() ;
-
-        if(!month_list[month]){
-            month_list[month] = 1 ;
-        }
-    }) ;
-
-    should(_.keys(month_list)).has.lengthOf(12) ;
-});
-
-Assertion.add('sameYearMonthDay', function(options){
-    should(options).not.empty() ;
-
-    function test(it){
-        if(options.year)
-            should(it.date.getFullYear()).match(options.year) ;
-
-        if(options.month)
-            should(it.date.getMonth()+1).match(options.month) ;
-
-        if(options.day)
-            should(it.date.getDate()).match(options.day) ;
-    }
-
-    if(_.isArray(this.obj)){
-        this.obj.forEach(function(it, idx, array){
-            should(it).has.property('date').and.it.is.Date() ;
-            test(it) ;
-        }) ;
-    } else {
-        should(this.obj).has.property('date').and.it.is.Date() ;
-        test(this.obj) ;
-    }
-})
 
 describe('Crawler Test', function() {
     this.timeout(100000) ;

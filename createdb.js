@@ -223,15 +223,15 @@ db.sequelize.sync().then(function(){
             action: batch_save(TAIEX)
         }).then(function(result){
             console.log('done') ;
-            // TAIEX.updateMvAll().then(function(result){TAIEX.updateBiasAll()}) ;
-            // TAIEX.updateMACDAll() ;
-            // TAIEX.updateKDAll() ;
-            // TAIEX.updateRSIAll() ;
-            // TAIEX.updatePsyAll() ;
-            // TAIEX.updateDMIAll() ;
-            TAIEX.findAll().then(function(records){
-                console.log(agg.calculateMonthlyPrice(records)) ;
-            })
+            TAIEX.updateMaAll().then(function(result){TAIEX.updateBiasAll()}) ;
+            TAIEX.updateMACDAll() ;
+            TAIEX.updateKDAll() ;
+            TAIEX.updateRSIAll() ;
+            TAIEX.updatePsyAll() ;
+            TAIEX.updateDMIAll() ;
+            // TAIEX.findAll().then(function(records){
+            //     console.log(agg.calculateMonthlyPrice(records)) ;
+            // })
         }) ;
 
     // var m_taiex_trade_pro = iterate_generator({
