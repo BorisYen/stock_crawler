@@ -16,34 +16,6 @@ var Stock = db.Stock ;
 var StockDailyInfo = db.StockDailyInfo ;
 var TAIEX = db.TAIEX ;
 
-// function* stock_gen(offset, limit, crawler){
-//     var offset = offset || 0 ;
-//     var limit = limit || 1 ;
-
-//     while(true){
-//         var stocks = yield Stock.findAll({offset: offset, limit: limit}) ;
-//         var data_g = monthly_cralwer_data_gen(stocks, crawler) ;
-
-//         for(var crawl_data of data_g){
-//             var crawl_results = yield crawl_data ;
-//             var upsert_promises = [] ;
-
-//             crawl_results.forEach(function(it, idx, array){
-//                  upsert_promises.push(StockDailyInfo.upsert(it).reflect()) ;
-//             }) ;
-
-//             yield Promise.all(upsert_promises) ;
-//         }
-
-//         if(stocks.length > 0)
-//             offset += limit ;
-//         else
-//             break ;
-//     }
-
-//     console.log('leave stock generator') ;
-// }
-
 /**
  * The project use Promise.all a lot.
  * 
@@ -82,19 +54,22 @@ function* monthly_cralwer_data_gen(stocks, crawler, start_date, end_date){
             var promise_list = [] ;
 
             for(var j = start_year; j > (start_year - year_range); j--){
-                promise_list.push(crawler.crawl({stock: stocks[i]['id'], year: j}).reflect()) ;
+                // promise_list.push(crawler.crawl({stock: stocks[i]['id'], year: j}).reflect()) ;
+                logger.info('Start crawler data for stock: %s, year: %d', stocks[i].id, j) ;
+                yield crawler.crawl({stock: stocks[i]['id'], year: j}) ;
             }
 
-            yield Promise.all(promise_list).then(gather_promise_result) ;
+            // yield Promise.all(promise_list).then(gather_promise_result) ;
         }
     } else {
         var promise_list = [] ;
 
         for(var j = start_year; j > (start_year - year_range); j--){
-            promise_list.push(crawler.crawl({year: j}).reflect()) ;
+            // promise_list.push(crawler.crawl({year: j}).reflect()) ;
+            yield crawler.crawl({year: j})
         }
 
-        yield Promise.all(promise_list).then(gather_promise_result) ;
+        // yield Promise.all(promise_list).then(gather_promise_result) ;
     }
 }
 
@@ -182,13 +157,23 @@ function iterate_generator(options){
                     go(gen.next(d)) ;
 
                     return null ;  // add a return clause here, so that the warning from promise can be supressed.
+                }).catch(function(err){
+                    logger.info(err.message) ;
+                    go(gen.next()) ;
+
+                    return null ;
                 });
             } else {
                 next.value.then(function(d){
                     go(gen.next(d)) ;
 
                     return null ;  // add a return clause here, so that the warning from promise can be supressed.
-                }) ;
+                }).catch(function(err){
+                    logger.info(err.message) ;
+                    go(gen.next()) ;
+
+                    return null ;
+                }); ;
             }
         }
 
@@ -202,37 +187,31 @@ db.sequelize.sync().then(function(){
     return stock_crawler.crawl().then(batch_save(Stock)) ;
 
 }).then(function(stocks){
-    var data_gen_promises = [] ;
 
-    // var m_price_crawler_pro = iterate_generator({
-    //         generator: monthly_cralwer_data_gen, 
-    //         gen_args: [ [{id: '0050'}], monthly_price_crawler], 
-    //         action: batch_save(StockDailyInfo)
-    //     }).then(function(result){
-    //         console.log('done') ;
-    //         StockDailyInfo.updateMvAll('0050').then(function(result){StockDailyInfo.updateBiasAll('0050')}) ;
-    //         StockDailyInfo.updateMACDAll('0050') ;
-    //         StockDailyInfo.updateKDAll('0050') ;
-    //         StockDailyInfo.updateRSIAll('0050') ;
-    //         StockDailyInfo.updatePsyAll('0050') ;
-    //     }) ;
-
-    var m_taiex_crawler_pro = iterate_generator({
+    var m_price_crawler_pro = iterate_generator({
             generator: monthly_cralwer_data_gen, 
-            gen_args: [[], monthly_taiex_crawler], 
-            action: batch_save(TAIEX)
+            gen_args: [stocks, monthly_price_crawler], 
+            action: batch_save(StockDailyInfo)
         }).then(function(result){
             console.log('done') ;
-            TAIEX.updateMaAll().then(function(result){TAIEX.updateBiasAll()}) ;
-            TAIEX.updateMACDAll() ;
-            TAIEX.updateKDAll() ;
-            TAIEX.updateRSIAll() ;
-            TAIEX.updatePsyAll() ;
-            TAIEX.updateDMIAll() ;
-            // TAIEX.findAll().then(function(records){
-            //     console.log(agg.calculateMonthlyPrice(records)) ;
-            // })
         }) ;
+
+    // var m_taiex_crawler_pro = iterate_generator({
+    //         generator: monthly_cralwer_data_gen, 
+    //         gen_args: [[], monthly_taiex_crawler], 
+    //         action: batch_save(TAIEX)
+    //     }).then(function(result){
+    //         console.log('done') ;
+    //         TAIEX.updateMaAll().then(function(result){TAIEX.updateBiasAll()}) ;
+    //         TAIEX.updateMACDAll() ;
+    //         TAIEX.updateKDAll() ;
+    //         TAIEX.updateRSIAll() ;
+    //         TAIEX.updatePsyAll() ;
+    //         TAIEX.updateDMIAll() ;
+    //         // TAIEX.findAll().then(function(records){
+    //         //     console.log(agg.calculateMonthlyPrice(records)) ;
+    //         // })
+    //     }) ;
 
     // var m_taiex_trade_pro = iterate_generator({
     //         generator: monthly_cralwer_data_gen, 
