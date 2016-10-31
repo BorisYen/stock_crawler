@@ -55,7 +55,7 @@ These function are all in **./lib/stats/technical_cal_functions.js**
 Note: the equations I used for those functions are all based on results of google search. It might not be accurate. 
 Please let me know if there is a better equation for those functions. 
 * * *
-## 5. Note
+## 4. Note
 I started this project just to pratice my js skill and try something new. 
 If you happen to see this project and like it, you are welcome to use it on any project of your own. No need to worry about the license issue.
 
