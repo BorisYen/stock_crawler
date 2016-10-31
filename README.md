@@ -4,7 +4,7 @@
 
 This is a project that could be used to crawl stock information out of TWSE (http://www.twse.com.tw/ch/index.php).
 
-The **./lib/stats** folder container clawler for different pages.
+The **./lib/crawlers** folder container clawler for different pages.
 
 **createdb.js** can be used to create db schema and crawl data from TWSE into db.
 
