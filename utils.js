@@ -3,8 +3,10 @@ var _ = require('lodash') ;
 exports.emptyFn = function(){} ;
 
 exports.convertToNum = function(text){
-    if(!_.isString(text))
+    if(!_.isString(text)){
+        console.log(text) ;
         throw new Error('Illegal Argument!') ;
+    }
 
     var ret = _.toNumber(text.split(",").join(""))
 

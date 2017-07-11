@@ -3,6 +3,7 @@ var stock_crawler = require('./lib/crawlers/stock_list_crawler') ;
 var monthly_pbpe_crawler = require('./lib/crawlers/monthly_pb_pe_crawler') ;
 var daily_pbpe_crawler = require('./lib/crawlers/daily_pb_pe_crawler') ;
 var daily_stock_load_security_lending_crawler = require('./lib/crawlers/daily_stock_load_security_lending_crawler') ;
+// var daily_institution_trade_crawler = require('./lib/crawlers/daily_institution_trade_crawler') ;
 var monthly_taiex_crawler = require('./lib/crawlers/monthly_taiex_crawler') 
 var monthly_taiex_trade_crawler = require('./lib/crawlers/monthly_taiex_trade_crawler') 
 var MonthlyStockDataCrawler = require('./lib/crawlers/crawler_base').MonthlyStockDataCrawler ;
@@ -182,11 +183,11 @@ function iterate_generator(options){
 }
 
 
-    var m_taiex_crawler_pro = iterate_generator({
-            generator: monthly_cralwer_data_gen, 
-            gen_args: [[], monthly_taiex_trade_crawler], 
-            action: batch_save(TAIEX)
-        })
+    // var d_pbpe_crawler_pro = iterate_generator({
+    //         generator: daily_crawler_data_gen, 
+    //         gen_args: [daily_institution_trade_crawler, new Date()], 
+    //         action: batch_save(StockDailyInfo)
+    //     }) ;
 
 db.sequelize.sync().then(function(){
 
@@ -194,13 +195,13 @@ db.sequelize.sync().then(function(){
 
 }).then(function(stocks){
 
-    var m_price_crawler_pro = iterate_generator({
-            generator: monthly_cralwer_data_gen, 
-            gen_args: [[{id:'2883'}], monthly_pbpe_crawler], 
-            action: batch_save(StockDailyInfo)
-        }).then(function(result){
-            console.log('done') ;
-        }) ;
+    // var m_price_crawler_pro = iterate_generator({
+    //         generator: monthly_cralwer_data_gen, 
+    //         gen_args: [[{id:'2883'}], monthly_pbpe_crawler], 
+    //         action: batch_save(StockDailyInfo)
+    //     }).then(function(result){
+    //         console.log('done') ;
+    //     }) ;
 
     // var m_price_crawler_pro = iterate_generator({
     //         generator: monthly_cralwer_data_gen, 
@@ -237,7 +238,7 @@ db.sequelize.sync().then(function(){
     
     // var d_pbpe_crawler_pro = iterate_generator({
     //         generator: daily_crawler_data_gen, 
-    //         gen_args: [daily_pbpe_crawler, new Date()], 
+    //         gen_args: [daily_stock_load_security_lending_crawler, new Date()], 
     //         action: batch_save(StockDailyInfo)
     //     }) ;
 
