@@ -18,10 +18,12 @@ exports.convertToNum = function(text){
 exports.convertToUTC = function(text){
     if(!_.isString(text))
         throw new Error('Illegal Argument!') ;
-
-    var date_parts = text.split("/") ;
-    if(date_parts.length == 3){
-        return new Date(Date.UTC(parseInt(date_parts[0]) + 1911, parseInt(date_parts[1]) - 1, date_parts[2])) ;
+    
+    var date_pattern = /(\d+)[^0-9]*(\d+)[^0-9]*(\d+)/ ;
+    // var date_parts = text.split("/") ;
+    var date_parts = text.match(date_pattern) ;
+    if(date_parts.length == 4){
+        return new Date(Date.UTC(parseInt(date_parts[1]) + 1911, parseInt(date_parts[2]) - 1, date_parts[3])) ;
     } else {
         throw new Error('Illegal Format for Date.') ;
     } 
