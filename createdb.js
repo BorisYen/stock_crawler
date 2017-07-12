@@ -3,7 +3,7 @@ var stock_crawler = require('./lib/crawlers/stock_list_crawler') ;
 var monthly_pbpe_crawler = require('./lib/crawlers/monthly_pb_pe_crawler') ;
 var daily_pbpe_crawler = require('./lib/crawlers/daily_pb_pe_crawler') ;
 var daily_stock_load_security_lending_crawler = require('./lib/crawlers/daily_stock_load_security_lending_crawler') ;
-// var daily_institution_trade_crawler = require('./lib/crawlers/daily_institution_trade_crawler') ;
+var daily_institution_trade_crawler = require('./lib/crawlers/daily_institution_trade_crawler') ;
 var monthly_taiex_crawler = require('./lib/crawlers/monthly_taiex_crawler') 
 var monthly_taiex_trade_crawler = require('./lib/crawlers/monthly_taiex_trade_crawler') 
 var MonthlyStockDataCrawler = require('./lib/crawlers/crawler_base').MonthlyStockDataCrawler ;
@@ -59,8 +59,6 @@ function* monthly_cralwer_data_gen(stocks, crawler, start_date, end_date){
                 logger.info('Start crawler data for stock: %s, year: %d', stocks[i].id, j) ;
                 yield crawler.crawl({stock: stocks[i]['id'], year: j}) ;
             }
-
-            // yield Promise.all(promise_list).then(gather_promise_result) ;
         }
     } else {
         var promise_list = [] ;
@@ -69,8 +67,6 @@ function* monthly_cralwer_data_gen(stocks, crawler, start_date, end_date){
             // promise_list.push(crawler.crawl({year: j}).reflect()) ;
             yield crawler.crawl({year: j})
         }
-
-        // yield Promise.all(promise_list).then(gather_promise_result) ;
     }
 }
 
@@ -183,12 +179,6 @@ function iterate_generator(options){
 }
 
 
-    // var d_pbpe_crawler_pro = iterate_generator({
-    //         generator: daily_crawler_data_gen, 
-    //         gen_args: [daily_institution_trade_crawler, new Date()], 
-    //         action: batch_save(StockDailyInfo)
-    //     }) ;
-
 db.sequelize.sync().then(function(){
 
     return stock_crawler.crawl().then(batch_save(Stock)) ;
@@ -252,7 +242,7 @@ db.sequelize.sync().then(function(){
     // })
     // var d_stock_load_security_lending_pro = iterate_generator({
     //         generator: daily_crawler_data_gen, 
-    //         gen_args: [daily_stock_load_security_lending_crawler, new Date()], 
+    //         gen_args: [daily_institution_trade_crawler, new Date()], 
     //         action: batch_save(StockDailyInfo)
     //     }) ;
 

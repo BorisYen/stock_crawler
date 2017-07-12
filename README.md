@@ -32,13 +32,13 @@ Note: This project depends on mysql for data storage.
 This project supports the following Crawlers. Each crawler is used to crawl data for a specific page. Those crawler are extened from **Crawler** class. 
 Each crawler should be able to work on its own.
 
-*   daily_institution_trade_crawler (<http://www.twse.com.tw/ch/trading/fund/T86/T86.php>)
-*   daily_pb_pe_crawler (<http://www.twse.com.tw/ch/trading/exchange/BWIBBU/BWIBBU_d.php>)
-*   daily_stock_load_security_lending_crawler (<http://www.twse.com.tw/ch/trading/exchange/TWTASU/TWTASU.php>)
-*   monthly_pb_pe_crawler (<http://www.twse.com.tw/ch/trading/exchange/BWIBBU/BWIBBU.php>)
-*   monthly_price_crawler (<http://www.twse.com.tw/ch/trading/exchange/STOCK_DAY/STOCK_DAYMAIN.php>)
-*   monthly_taiex_crawler (<http://www.twse.com.tw/ch/trading/indices/MI_5MINS_HIST/MI_5MINS_HIST.php>)
-*   monthly_taiex_trade_crawler (<http://www.twse.com.tw/ch/trading/exchange/FMTQIK/FMTQIK.php>)
+*   daily_institution_trade_crawler (<http://www.tse.com.tw/fund/T86>)
+*   daily_pb_pe_crawler (<http://www.tse.com.tw/exchangeReport/BWIBBU_d>)
+*   daily_stock_load_security_lending_crawler (<http://www.tse.com.tw/exchangeReport/TWTASU>)
+*   monthly_pb_pe_crawler (<http://www.tse.com.tw/exchangeReport/BWIBBU>)
+*   monthly_price_crawler (<http://www.tse.com.tw/exchangeReport/STOCK_DAY>)
+*   monthly_taiex_crawler (<http://www.tse.com.tw/indicesReport/MI_5MINS_HIST>)
+*   monthly_taiex_trade_crawler (<http://www.tse.com.tw/exchangeReport/FMTQIK>)
 
 * * *
 ## 3. Technical Functions
@@ -56,10 +56,10 @@ Note: the equations I used for those functions are all based on results of googl
 Please let me know if there is a better equation for those functions. 
 * * *
 ## 4. Note
+
 I started this project just to pratice my js skill and try something new. 
 If you happen to see this project and like it, you are welcome to use it on any project of your own. No need to worry about the license issue.
 
 The project is still ongoing. The js file might not function correctly from time to time.
 
-
- 
+v0.1 is no longer working due to the redesing of web interface by TWSE.
