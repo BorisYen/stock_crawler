@@ -23,7 +23,7 @@ describe('Use taiex to test technical functions', function(){
     it('Crawler data and compare with golden data', function(){
         var results = [] ;
 
-        common_lib.get_yearly_data(monthly_taiex_crawler, 2015).then(function(result2015){
+        return common_lib.get_yearly_data(monthly_taiex_crawler, 2015).then(function(result2015){
             results = results.concat(result2015) ;
 
             return common_lib.get_yearly_data(monthly_taiex_crawler, 2016) ;

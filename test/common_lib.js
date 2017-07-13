@@ -5,6 +5,7 @@ var Assertion = should.Assertion ;
 var _ = require('lodash') ;
 var co = require('co') ;
 var c_base = require('../lib/crawlers/crawler_base') ;
+var Promise = require('bluebird') ;
 
 Assertion.add('resultIn', function(golden_data, attrs_to_test){
     var records = this.obj ;
@@ -94,7 +95,16 @@ function get_yearly_data(crawler, year=2015, stock='1101'){
             else throw new Error('The crawler should be instance of MonthlyDataCrawler or MonthlyStockDataCrawler.') ;
 
             // console.log(crawler.name+" "+year+" "+i) ;
-            ret = ret.concat(tmp) ;
+
+            if(tmp.length > 1)
+                ret = ret.concat(tmp) ;
+
+            // try not to get data too quickly, otherwise might get http 503.
+            yield new Promise(function(resolve, reject){
+                setTimeout(function() {
+                    resolve([]) ;
+                }, 500);
+            }) ;
         }
 
         return ret ;
