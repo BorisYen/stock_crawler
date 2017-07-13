@@ -3,6 +3,8 @@ process.env.NODE_ENV = 'test' ;  // this needs to be the first line of the test 
 var should = require('should') ;
 var Assertion = should.Assertion ;
 var _ = require('lodash') ;
+var co = require('co') ;
+var c_base = require('../lib/crawlers/crawler_base') ;
 
 Assertion.add('resultIn', function(golden_data, attrs_to_test){
     var records = this.obj ;
@@ -74,3 +76,30 @@ Assertion.add('sameYearMonthDay', function(options){
         test(this.obj) ;
     }
 })
+
+function get_yearly_data(crawler, year=2015, stock='1101'){
+    if(!crawler) throw new Error('Need to have a crawler to crawl data.') ;
+
+    return co(function* (){
+        var ret = [] ;
+        
+        for(var i=1; i<=12; i++){
+            var tmp = [] ;
+
+            // this needs to be test first because MonthlyStockDataCrawler is also instance of MonthlyDataCrawler
+            if(crawler instanceof c_base.MonthlyStockDataCrawler) 
+                tmp = yield crawler.crawl({stock: stock, year: year, month: i}) ;
+            else if(crawler instanceof c_base.MonthlyDataCrawler)
+                tmp = yield crawler.crawl({year: year, month: i}) ;
+            else throw new Error('The crawler should be instance of MonthlyDataCrawler or MonthlyStockDataCrawler.') ;
+
+            // console.log(crawler.name+" "+year+" "+i) ;
+            ret = ret.concat(tmp) ;
+        }
+
+        return ret ;
+    }) ;
+}
+
+exports.get_yearly_data = get_yearly_data ;
+

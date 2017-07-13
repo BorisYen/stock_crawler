@@ -1,4 +1,4 @@
-var test_common = require('./common_lib') ; // this needs to be the first line of the test file.
+var common_lib = require('./common_lib') ; // this needs to be the first line of the test file.
 
 var db = require('../dbconnection') ;
 var monthly_taiex_crawler = require('../lib/crawlers/monthly_taiex_crawler') ;
@@ -37,10 +37,10 @@ describe('Crawler Test', function() {
                 return monthly_taiex_crawler.crawl({year: 2020, month: 5, day: 4}).should.be.rejectedWith(/No data available/) ;
             }) ;
 
-            // it('crawl data for a whole year.', function(){
-            //     return monthly_taiex_crawler.crawl({year: 2015}).should.finally.be.an.Array()
-            //         .and.have.sameYearMonthDay({year: 2015}).and.coverAllMonthes() ;
-            // }) ;
+            it('crawl data for a whole year.', function(){
+                return common_lib.get_yearly_data(monthly_taiex_crawler, 2015).should.finally.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2015}).and.coverAllMonthes() ;
+            }) ;
         });
     });
 
@@ -65,10 +65,10 @@ describe('Crawler Test', function() {
                 return monthly_taiex_trade_crawler.crawl({year: 2020, month: 5, day: 4}).should.be.rejectedWith(/No data available/) ;
             }) ;
 
-            // it('crawl data for a whole year.', function(){
-            //     return monthly_taiex_trade_crawler.crawl({year: 2015}).should.finally.be.an.Array()
-            //         .and.have.sameYearMonthDay({year: 2015}).and.coverAllMonthes() ;
-            // }) ;
+            it('crawl data for a whole year.', function(){
+                return common_lib.get_yearly_data(monthly_taiex_trade_crawler, 2015).should.finally.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2015}).and.coverAllMonthes() ;
+            }) ;
         });
     });
 
@@ -96,10 +96,10 @@ describe('Crawler Test', function() {
                 return monthly_price_crawler.crawl({year: 2016, month: 5, day: 4}).should.be.rejectedWith(/Stock Symbol not found/) ;
             }) ;
 
-            // it('crawl data for a whole year.', function(){
-            //     return monthly_pbpe_crawler.crawl({stock: '1101', year: 2015}).should.finally.be.an.Array()
-            //         .and.have.sameYearMonthDay({year: 2015}).and.coverAllMonthes() ;
-            // }) ;
+            it('crawl data for a whole year.', function(){
+                return common_lib.get_yearly_data(monthly_pbpe_crawler, 2015).should.finally.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2015}).and.coverAllMonthes() ;
+            }) ;
         });
 	});
 
@@ -128,10 +128,10 @@ describe('Crawler Test', function() {
                 return monthly_price_crawler.crawl({year: 2016, month: 5, day: 4}).should.be.rejectedWith(/Stock Symbol not found/) ;
             }) ;
 
-            // it('crawl data for a whole year.', function(){
-            //     return monthly_price_crawler.crawl({stock: '0050', year: 2015}).should.finally.be.an.Array()
-            //         .and.have.sameYearMonthDay({year: 2015}).and.coverAllMonthes() ;
-            // }) ;
+            it('crawl data for a whole year.', function(){
+                return common_lib.get_yearly_data(monthly_price_crawler, 2015).should.finally.be.an.Array()
+                    .and.have.sameYearMonthDay({year: 2015}).and.coverAllMonthes() ;
+            }) ;
         });
     });
 

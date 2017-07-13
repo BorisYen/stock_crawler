@@ -1,4 +1,4 @@
-var test_common = require('./common_lib') ; // this needs to be the first line of the test file.
+var common_lib = require('./common_lib') ; // this needs to be the first line of the test file.
 var fs = require('fs') ;
 var monthly_taiex_crawler = require('../lib/crawlers/monthly_taiex_crawler') ;
 var db = require('../dbconnection') ;
@@ -22,25 +22,28 @@ describe('Use taiex to test technical functions', function(){
     // therefore, when doing the test, we also need to crawl the data for 2015 and 2016.
     it('Crawler data and compare with golden data', function(){
         var results = [] ;
-        return monthly_taiex_crawler.crawl({year: 2015}).then(function(records){
-            results = results.concat(records)
 
-            return monthly_taiex_crawler.crawl({year: 2016})
+        common_lib.get_yearly_data(monthly_taiex_crawler, 2015).then(function(result2015){
+            results = results.concat(result2015) ;
+
+            return common_lib.get_yearly_data(monthly_taiex_crawler, 2016) ;
+        }).then(function(result2016){
+            results = results.concat(result2016) ;
+
+            return results ;
         }).then(function(records){
-            results = results.concat(records) ;
-
-            tech_functions.updateMaAll(results, [5, 10, 20, 60, 120, 240]) ;
-            tech_functions.updateBiasAll(results, [5, 10, 20]) ;
-            tech_functions.updateRSIAll(results, [5, 10, 6, 12]) ;
-            tech_functions.updateKDAll(results, [9]) ;
-            tech_functions.updatePsyAll(results, [12, 24]) ;
-            tech_functions.updateDMIAll(results, [14]) ;
-            tech_functions.updateMACDAll(results, [12, 26, 9]) ;
+            tech_functions.updateMaAll(records, [5, 10, 20, 60, 120, 240]) ;
+            tech_functions.updateBiasAll(records, [5, 10, 20]) ;
+            tech_functions.updateRSIAll(records, [5, 10, 6, 12]) ;
+            tech_functions.updateKDAll(records, [9]) ;
+            tech_functions.updatePsyAll(records, [12, 24]) ;
+            tech_functions.updateDMIAll(records, [14]) ;
+            tech_functions.updateMACDAll(records, [12, 26, 9]) ;
 
             var promise_list = [] ;
 
-            for(var i=0; i<results.length; i++){
-                promise_list.push(TAIEX.upsert(results[i]).reflect()) ;
+            for(var i=0; i<records.length; i++){
+                promise_list.push(TAIEX.upsert(records[i]).reflect()) ;
             }
 
             return Promise.all(promise_list) ;
