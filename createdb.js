@@ -38,8 +38,6 @@ function gather_promise_result(results){
 
 /**
  * Get data for a year at a time. Focus on year for now.
- * 
- * TODO: make it more accurate when retrieving data.
  */
 function* monthly_cralwer_data_gen(stocks, crawler, start_date, end_date){
     var start_date = start_date || new Date() ;
@@ -49,24 +47,44 @@ function* monthly_cralwer_data_gen(stocks, crawler, start_date, end_date){
 
     var start_year = start_date.getFullYear() ;
     var year_range = start_year - end_date.getFullYear() ;
-    
-    if(crawler instanceof MonthlyStockDataCrawler){
-        for(var i=0; i<stocks.length; i++){
-            var promise_list = [] ;
+    var batch_size = config.request_batch_size ;
+    var promise_list = [] ;
+    var promise_handled_count = 0 ;
 
+    if(crawler instanceof MonthlyStockDataCrawler){
+        for(var i=0; i<stocks.length; i++){    
             for(var j = start_year; j > (start_year - year_range); j--){
-                // promise_list.push(crawler.crawl({stock: stocks[i]['id'], year: j}).reflect()) ;
-                logger.info('Start crawler data for stock: %s, year: %d', stocks[i].id, j) ;
-                yield crawler.crawl({stock: stocks[i]['id'], year: j}) ;
+                for(var k=1; k<=12; k++){
+                    if(Date.now() > Date.UTC(j, k - 1)){
+                        promise_list.push(crawler.crawl({stock: stocks[i]['id'], year: j, month: k}).reflect()) ;
+                        promise_handled_count++ ;
+
+                        if(promise_handled_count%batch_size === 0){
+                            yield Promise.all(promise_list).then(gather_promise_result) ;
+                            promise_list = [] ;
+                        }
+                    }
+                }
             }
         }
     } else {
-        var promise_list = [] ;
-
         for(var j = start_year; j > (start_year - year_range); j--){
-            // promise_list.push(crawler.crawl({year: j}).reflect()) ;
-            yield crawler.crawl({year: j})
+            for(var k=1; k<=12; k++){
+                if(Date.now() > Date.UTC(j, k - 1)){
+                    promise_list.push(crawler.crawl({year: j, month: k}).reflect()) ;
+                    promise_handled_count++ ;
+
+                    if(promise_handled_count%batch_size === 0){
+                        yield Promise.all(promise_list).then(gather_promise_result) ;
+                        promise_list = [] ;
+                    }
+                }
+            }
         }
+    }
+
+    if(promise_list.length > 0){
+        yield Promise.all(promise_list).then(gather_promise_result) ;
     }
 }
 
@@ -82,7 +100,7 @@ function* daily_crawler_data_gen(crawler, start_date, end_date){
     var cur_year = start_date.getFullYear() ;
     var cur_month = start_date.getMonth() ;
     var cur_day = start_date.getDate() ;
-    var batch_size = 2 ;
+    var batch_size = config.request_batch_size ;
     var offset = 0 ;
     var promise_batch = [] ;
 
@@ -201,22 +219,23 @@ db.sequelize.sync().then(function(){
     //         console.log('done') ;
     //     }) ;
 
-    // var m_taiex_crawler_pro = iterate_generator({
-    //         generator: monthly_cralwer_data_gen, 
-    //         gen_args: [[], monthly_taiex_crawler], 
-    //         action: batch_save(TAIEX)
-    //     }).then(function(result){
-    //         console.log('done') ;
-    //         TAIEX.updateMaAll().then(function(result){TAIEX.updateBiasAll()}) ;
-    //         TAIEX.updateMACDAll() ;
-    //         TAIEX.updateKDAll() ;
-    //         TAIEX.updateRSIAll() ;
-    //         TAIEX.updatePsyAll() ;
-    //         TAIEX.updateDMIAll() ;
-    //         // TAIEX.findAll().then(function(records){
-    //         //     console.log(agg.calculateMonthlyPrice(records)) ;
-    //         // })
-    //     }) ;
+    var m_taiex_crawler_pro = iterate_generator({
+            generator: monthly_cralwer_data_gen, 
+            gen_args: [[], monthly_taiex_crawler], 
+            action: batch_save(TAIEX)
+        }).then(function(result){
+            console.log('done') ;
+            TAIEX.updateMaAll().then(function(result){TAIEX.updateBBandAll()}) ;
+            // TAIEX.updateMaAll().then(function(result){TAIEX.updateBiasAll()}) ;
+            // TAIEX.updateMACDAll() ;
+            // TAIEX.updateKDAll() ;
+            // TAIEX.updateRSIAll() ;
+            // TAIEX.updatePsyAll() ;
+            // TAIEX.updateDMIAll() ;
+            // TAIEX.findAll().then(function(records){
+            //     console.log(agg.calculateMonthlyPrice(records)) ;
+            // })
+        }) ;
 
     // var m_taiex_trade_pro = iterate_generator({
     //         generator: monthly_cralwer_data_gen, 

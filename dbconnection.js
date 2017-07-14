@@ -223,7 +223,8 @@ exports.TAIEX = sequelize.define('taiex', {
     n_di14: Sequelize.FLOAT,
     p_dm14: Sequelize.FLOAT,
     n_dm14: Sequelize.FLOAT,
-    dx14: Sequelize.FLOAT
+    dx14: Sequelize.FLOAT,
+    bband20_sdev: Sequelize.FLOAT
 },{
     tableName: 'taiex',
     timestamps: false,
@@ -240,6 +241,7 @@ exports.TAIEX = sequelize.define('taiex', {
         updatePsyAll: _updatePsyAll,
         updateMACDAll: _updateMACDAll,
         updateDMIAll: _updateDMIAll,
+        updateBBandAll: _updateBBandAll,
         updateAll: _updateAll
     }
 }) ;
@@ -338,6 +340,19 @@ function _updateMaAll(stock){
     query_criteria.attributes = stock? this.getPriceAttrs().concat('date').concat('id'): this.getPriceAttrs().concat('date') ;
     return this.findAll(query_criteria).then(function(records){
         tech_functions.updateMaAll(records, mv_days) ;
+
+        return that.updateAll(records) ;
+    }) ;
+}
+
+function _updateBBandAll(stock){
+    var query_criteria = stock? {order: 'date desc', id: stock} : {order: 'date desc'} ;
+    var mv_days = _getAllDaysForAttr(_.keys(this.attributes), 'ma') ;
+    var that = this ;
+
+    query_criteria.attributes = stock? this.getPriceAttrs().concat('date').concat('id').concat(this.getMaAttrs()): this.getPriceAttrs().concat('date').concat(this.getMaAttrs()) ;
+    return this.findAll(query_criteria).then(function(records){
+        tech_functions.updateBBandAll(records, [20]) ;
 
         return that.updateAll(records) ;
     }) ;

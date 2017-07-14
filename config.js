@@ -26,6 +26,7 @@ module.exports = {
     test_db_db: 'stock_test',
 
     create_db_year_range: 2,
+    request_batch_size: 2,  // control the batch size of requests sending to twse
 
     http_request_timeout: 60000
 }
