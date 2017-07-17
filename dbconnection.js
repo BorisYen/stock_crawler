@@ -224,7 +224,11 @@ exports.TAIEX = sequelize.define('taiex', {
     p_dm14: Sequelize.FLOAT,
     n_dm14: Sequelize.FLOAT,
     dx14: Sequelize.FLOAT,
-    bband20_sdev: Sequelize.FLOAT
+    bband20_sdev: Sequelize.FLOAT,
+    bband20_up: Sequelize.FLOAT,
+    bband20_low: Sequelize.FLOAT,
+    bband20_b: Sequelize.FLOAT,
+    bband20_width: Sequelize.FLOAT
 },{
     tableName: 'taiex',
     timestamps: false,
@@ -347,12 +351,12 @@ function _updateMaAll(stock){
 
 function _updateBBandAll(stock){
     var query_criteria = stock? {order: 'date desc', id: stock} : {order: 'date desc'} ;
-    var mv_days = _getAllDaysForAttr(_.keys(this.attributes), 'ma') ;
+    var bband_days = _getAllDaysForAttr(_.keys(this.attributes), /bband(\d+)_[a-zA-Z]*/) ;
     var that = this ;
 
     query_criteria.attributes = stock? this.getPriceAttrs().concat('date').concat('id').concat(this.getMaAttrs()): this.getPriceAttrs().concat('date').concat(this.getMaAttrs()) ;
     return this.findAll(query_criteria).then(function(records){
-        tech_functions.updateBBandAll(records, [20]) ;
+        tech_functions.updateBBandAll(records, bband_days) ;
 
         return that.updateAll(records) ;
     }) ;
@@ -404,7 +408,7 @@ function _getAttrWithPrefix(keys, attrPrefix){
 
             if(!isNaN(day))
                 ret.push(it) ;
-        }
+        } 
     }) ;
 
     return ret ;
@@ -412,15 +416,23 @@ function _getAttrWithPrefix(keys, attrPrefix){
 
 function _getAllDaysForAttr(keys, attrPrefix){
     var ret = [] ;
+    var set = new Set() ;
 
     keys.forEach(function(it, idx, array){
-        if(it.startsWith(attrPrefix)){
+        if(!(attrPrefix instanceof RegExp) && it.startsWith(attrPrefix)){
             var day = parseInt(it.slice(attrPrefix.length)) ;
 
             if(!isNaN(day))
-                ret.push(day) ;
+                set.add(day) ;
+        } else if(attrPrefix instanceof RegExp){
+            var matches = it.match(attrPrefix) ;
+            
+            if(matches)
+                set.add(parseInt(matches[1])) ;
         }
     }) ;
+
+    ret = Array.from(set) ;
 
     return ret.sort(function(a, b){
         if(a < b) return -1 ;
